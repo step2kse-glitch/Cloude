@@ -169,6 +169,8 @@ for (const [i, s] of episode.slides.entries()) {
   await p.evaluate(() => document.fonts.ready);
   const file = path.join(outDir, `${String(i + 1).padStart(2, '0')}.png`);
   await p.screenshot({ path: file });
+  // 인스타그램 API는 JPEG만 받으므로 같은 이름의 .jpg도 만든다.
+  await p.screenshot({ path: file.replace(/\.png$/, '.jpg'), type: 'jpeg', quality: 92 });
   console.log('✓', path.relative(root, file));
 }
 await rm(path.join(outDir, '.slide.html'), { force: true });

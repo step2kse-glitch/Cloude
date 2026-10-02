@@ -47,6 +47,20 @@ npm run render -- hc-001
 
 줄바꿈은 `\n` 으로 직접 넣습니다. 색과 계정 이름은 `carousel/series.json` 에서 바꿉니다.
 
+## 인스타그램 게시
+
+```bash
+node scripts/publish-instagram.mjs --check          # 토큰과 계정 확인
+node scripts/publish-instagram.mjs gal-01           # 미리보기 (게시 안 함)
+node scripts/publish-instagram.mjs gal-01 --yes     # 실제 게시
+node scripts/publish-instagram.mjs --refresh        # 토큰 기한 연장
+```
+
+- 환경 변수 `IG_ACCESS_TOKEN` (Instagram 로그인 API, `instagram_business_content_publish` 권한)
+- 네트워크 허용: `graph.instagram.com`
+- 카드 JPG가 GitHub에 push 되어 있어야 합니다. 인스타 서버가 공개 주소에서 이미지를 가져갑니다.
+- API 캐러셀은 최대 10장입니다.
+
 ## 로고스 자료
 
 로고스는 공개 API가 없어서, 자료는 `sources/` 폴더에 직접 넣습니다. 자세한 안내는 [`sources/README.md`](sources/README.md)를 보세요.
