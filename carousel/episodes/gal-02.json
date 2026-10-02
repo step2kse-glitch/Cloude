@@ -9,7 +9,9 @@
       "type": "cover",
       "kicker": "한 구절 묵상 02",
       "title": "같은 식탁에\n앉을 수 있는 이유",
-      "sub": "갈라디아서 2:16"
+      "sub": "갈라디아서 2:16",
+      "bg": "carousel/images/paul-scribe.webp",
+      "bgPos": "30% center"
     },
     {
       "type": "quote",
