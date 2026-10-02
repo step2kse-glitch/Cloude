@@ -60,7 +60,7 @@ function slideBody(s) {
         <ol class="list">${s.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ol>`;
     case 'outro':
       return `<div class="mark">“</div>
-        <blockquote class="verse">${esc(s.verse)}</blockquote>
+        <blockquote class="verse${s.verse.split('\n').length > 3 ? ' long' : ''}">${esc(s.verse)}</blockquote>
         <div class="cite">${esc(s.cite)}</div>
         <div class="next">${esc(s.next)}</div>
         <div class="cta">저장해 두고 한 주 동안 묵상해 보세요</div>`;
@@ -110,6 +110,7 @@ ${fontFaces}
   .mark { font-family: 'Noto Serif KR', serif; font-size: 200px; line-height: .6; color: var(--accent); height: 100px; }
   blockquote { font-size: 64px; line-height: 1.5; font-weight: 700; margin: 30px 0 50px; }
   blockquote.verse { font-size: 76px; }
+  blockquote.verse.long { font-size: 58px; margin: 20px 0 36px; }
   .cite { font-size: 32px; color: var(--muted); }
   .word { font-size: 120px; font-weight: 700; color: var(--accent); line-height: 1.1; }
   .gloss { font-size: 34px; color: var(--muted); margin-top: 24px; }
