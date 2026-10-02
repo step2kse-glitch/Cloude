@@ -1,0 +1,13 @@
+{
+  "handle": "@생각공방",
+  "brand": "생각공방 교리공부",
+  "size": { "width": 1080, "height": 1350 },
+  "theme": {
+    "paper": "#F4EEE3",
+    "ink": "#1F2A3A",
+    "muted": "#6B6457",
+    "accent": "#8C2F2B",
+    "deep": "#1F2A3A",
+    "deepInk": "#F4EEE3"
+  }
+}
