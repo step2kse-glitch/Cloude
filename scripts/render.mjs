@@ -45,7 +45,7 @@ function slideBody(s) {
     case 'quote':
       return `<div class="kicker">${esc(s.kicker)}</div>
         <div class="mark">“</div>
-        <blockquote>${esc(s.quote)}</blockquote>
+        <blockquote class="${s.quote.split('\n').length > 4 ? 'long' : ''}">${esc(s.quote)}</blockquote>
         <div class="cite">${esc(s.cite)}</div>`;
     case 'word':
       return `<div class="kicker">${esc(s.kicker)}</div>
@@ -55,6 +55,16 @@ function slideBody(s) {
         <p class="body">${esc(s.body)}</p>`;
     case 'key':
       return `<div class="key">${esc(s.body)}</div>`;
+    case 'phrase':
+      // 구절을 한 마디씩 끊어 천천히 읽는 카드
+      return `<div class="kicker">${esc(s.kicker)}</div>
+        <div class="phrase">${esc(s.phrase)}</div>
+        <div class="rule"></div>
+        <p class="body">${esc(s.body)}</p>`;
+    case 'prayer':
+      return `<div class="kicker">${esc(s.kicker ?? '오늘의 기도')}</div>
+        <p class="prayer">${esc(s.body)}</p>
+        <div class="amen">아멘.</div>`;
     case 'list':
       return `<div class="kicker">${esc(s.kicker)}</div>
         <ol class="list">${s.items.map((i) => `<li>${esc(i)}</li>`).join('')}</ol>`;
@@ -63,7 +73,7 @@ function slideBody(s) {
         <blockquote class="verse${s.verse.split('\n').length > 3 ? ' long' : ''}">${esc(s.verse)}</blockquote>
         <div class="cite">${esc(s.cite)}</div>
         <div class="next">${esc(s.next)}</div>
-        <div class="cta">저장해 두고 한 주 동안 묵상해 보세요</div>`;
+        <div class="cta">${esc(s.cta ?? '저장해 두고 한 주 동안 묵상해 보세요')}</div>`;
     default:
       throw new Error(`알 수 없는 슬라이드 타입: ${s.type}`);
   }
@@ -105,7 +115,10 @@ ${fontFaces}
   }
   .top { top: 80px; } .bottom { bottom: 80px; }
   .kicker { font-size: 32px; font-weight: 700; color: ${dark ? '#E6B9A6' : 'var(--accent)'}; letter-spacing: .06em; margin-bottom: 44px; }
-  h1, h2, blockquote, .word, .key { font-family: 'Noto Serif KR', serif; }
+  h1, h2, blockquote, .word, .key, .phrase, .prayer { font-family: 'Noto Serif KR', serif; }
+  .phrase { font-size: 76px; line-height: 1.35; font-weight: 900; color: var(--accent); }
+  .prayer { font-size: 50px; line-height: 1.7; font-weight: 700; }
+  .amen { margin-top: 40px; font-size: 40px; font-weight: 700; color: var(--accent); }
   .cover-title { font-size: 92px; line-height: 1.32; font-weight: 900; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
   h2 { font-size: 80px; line-height: 1.3; font-weight: 900; }
   .rule { width: 90px; height: 6px; background: ${dark ? '#E6B9A6' : 'var(--accent)'}; margin: 56px 0; }
@@ -113,6 +126,7 @@ ${fontFaces}
   .body { font-size: 40px; line-height: 1.75; color: ${dark ? t.deepInk : 'var(--ink)'}; }
   .mark { font-family: 'Noto Serif KR', serif; font-size: 200px; line-height: .6; color: var(--accent); height: 100px; }
   blockquote { font-size: 64px; line-height: 1.5; font-weight: 700; margin: 30px 0 50px; }
+  blockquote.long { font-size: 50px; margin: 10px 0 36px; }
   blockquote.verse { font-size: 76px; }
   blockquote.verse.long { font-size: 58px; margin: 20px 0 36px; }
   .cite { font-size: 32px; color: var(--muted); }
