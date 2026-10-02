@@ -103,6 +103,17 @@ const { id: container } = call('POST', `${API}/me/media`, {
 });
 await waitReady(container);
 
-const { id: mediaId } = call('POST', `${API}/me/media_publish`, { creation_id: container });
+// 컨테이너가 FINISHED여도 곧바로 게시하면 9007(Media ID is not available)이 날 때가 있어 잠시 뒤 다시 시도한다.
+let mediaId;
+for (let i = 0; ; i++) {
+  try {
+    ({ id: mediaId } = call('POST', `${API}/me/media_publish`, { creation_id: container }));
+    break;
+  } catch (e) {
+    if (!/code 9007/.test(e.message) || i >= 5) throw e;
+    console.log(`  … 게시 대기 (${i + 1}/5)`);
+    await sleep(10000);
+  }
+}
 const { permalink } = call('GET', `${API}/${mediaId}`, { fields: 'permalink' });
 console.log(`\n게시 완료: ${permalink}`);
