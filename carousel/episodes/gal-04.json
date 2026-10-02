@@ -45,7 +45,9 @@
     },
     {
       "type": "key",
-      "body": "내 자리에\n그분이\n서셨습니다."
+      "body": "내 자리에\n그분이\n서셨습니다.",
+      "bg": "carousel/images/cross-sunset.png",
+      "bgPos": "22% center"
     },
     {
       "type": "list",

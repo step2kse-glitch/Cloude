@@ -18,6 +18,8 @@
 - 01–03편: `carousel/images/paul-scribe.webp` (앉아서 구술하는 바울), `bgPos: 30% center`
 - 04편부터: `carousel/images/paul-teaching.png` (서서 가르치는 바울), `bgPos: 38% center`
 
+- 7번째 장(핵심 한 줄, key): 04편부터 `carousel/images/cross-sunset.png` (노을 속 십자가), `bgPos: 22% center`
+
 편마다 다른 그림을 받으면 그 편만 바꾼다.
 
 ## 카드 구성 (10장: 인스타그램 API 캐러셀 한도)
