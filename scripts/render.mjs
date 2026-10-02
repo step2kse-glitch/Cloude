@@ -45,7 +45,7 @@ function slideBody(s) {
     case 'quote':
       return `<div class="kicker">${esc(s.kicker)}</div>
         <div class="mark">“</div>
-        <blockquote class="${s.quote.split('\n').length > 4 ? 'long' : ''}">${esc(s.quote)}</blockquote>
+        <blockquote class="${s.quote.split('\n').length > 7 ? 'long xlong' : s.quote.split('\n').length > 4 ? 'long' : ''}">${esc(s.quote)}</blockquote>
         <div class="cite">${esc(s.cite)}</div>`;
     case 'word':
       return `<div class="kicker">${esc(s.kicker)}</div>
@@ -129,6 +129,7 @@ ${fontFaces}
   .mark { font-family: 'Noto Serif KR', serif; font-size: 200px; line-height: .6; color: var(--accent); height: 100px; }
   blockquote { font-size: 64px; line-height: 1.5; font-weight: 700; margin: 30px 0 50px; }
   blockquote.long { font-size: 50px; margin: 10px 0 36px; }
+  blockquote.xlong { font-size: 44px; line-height: 1.55; }
   blockquote.verse { font-size: 76px; }
   blockquote.verse.long { font-size: 58px; margin: 20px 0 36px; }
   .cite { font-size: 32px; color: var(--muted); }
