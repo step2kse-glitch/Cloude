@@ -5,7 +5,7 @@
 | 01 | gal-01 | 1:10 | 누구의 기쁨을 구하는가 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd--NYGm0Lq/ |
 | 02 | gal-02 | 2:16 | 행위가 아니라 믿음으로 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd--stElW3T/ |
 | 03 | gal-03 | 2:20 | 내 안에 그리스도께서 사신다 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd--zkyltsx/ |
-| 04 | gal-04 | 3:13 | 대신 받으신 저주 | 카드 초안 · 표지 그림 |
+| 04 | gal-04 | 3:13 | 대신 받으신 저주 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_JQsLlQ0q/ |
 | 05 | gal-05 | 3:28 | 그리스도 안에서 하나 | |
 | 06 | gal-06 | 4:6 | 아빠 아버지 | |
 | 07 | gal-07 | 5:1 | 다시 메지 말아야 할 멍에 | |
