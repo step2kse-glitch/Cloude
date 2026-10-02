@@ -49,7 +49,7 @@ function slideBody(s) {
         <div class="cite">${esc(s.cite)}</div>`;
     case 'word':
       return `<div class="kicker">${esc(s.kicker)}</div>
-        <div class="word">${esc(s.word)}</div>
+        <div class="word${[...s.word].length > 9 ? ' long' : ''}">${esc(s.word)}</div>
         <div class="gloss">${esc(s.gloss)}</div>
         <div class="rule"></div>
         <p class="body">${esc(s.body)}</p>`;
@@ -134,6 +134,7 @@ ${fontFaces}
   blockquote.verse.long { font-size: 58px; margin: 20px 0 36px; }
   .cite { font-size: 32px; color: var(--muted); }
   .word { font-size: 120px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+  .word.long { font-size: 78px; }
   .gloss { font-size: 34px; color: var(--muted); margin-top: 24px; }
   .key { font-size: 118px; line-height: 1.35; font-weight: 900; }
   .list { list-style: none; counter-reset: q; }
