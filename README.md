@@ -35,13 +35,15 @@ npm run render -- hc-001
 
 | type | 용도 | 필드 |
 |---|---|---|
-| `cover` | 표지 (짙은 배경) | `kicker`, `title`, `sub` |
+| `cover` | 표지 (짙은 배경) | `kicker`, `title`, `sub`, `bg`(선택) |
 | `text` | 제목 + 본문 | `title`, `body` |
 | `quote` | 요리문답 대답 인용 | `kicker`, `quote`, `cite` |
 | `word` | 원어 단어 하나 | `kicker`, `word`, `gloss`, `body` |
 | `key` | 핵심 한 문장 (짙은 배경) | `body` |
 | `list` | 나눔 질문 | `kicker`, `items[]` |
 | `outro` | 암송 구절 + 다음 회차 예고 | `verse`, `cite`, `next` |
+
+어느 슬라이드든 `"bg": "carousel/images/파일.jpg"` 를 넣으면 사진 배경 위에 짙은 음영이 덮입니다.
 
 줄바꿈은 `\n` 으로 직접 넣습니다. 색과 계정 이름은 `carousel/series.json` 에서 바꿉니다.
 

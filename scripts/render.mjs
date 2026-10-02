@@ -71,6 +71,10 @@ function slideBody(s) {
 
 function page(s, index, total) {
   const dark = s.type === 'key' || s.type === 'cover';
+  // 배경 사진(bg)이 있으면 짙은 음영을 덮어 글자가 잘 읽히게 한다.
+  const bg = s.bg
+    ? `linear-gradient(180deg, rgba(20,28,40,.55) 0%, rgba(20,28,40,.72) 45%, rgba(20,28,40,.92) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') center / cover no-repeat`
+    : dark ? t.deep : 'var(--paper)';
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <style>
 ${fontFaces}
@@ -78,7 +82,7 @@ ${fontFaces}
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width:${width}px; height:${height}px; }
   body {
-    background: ${dark ? t.deep : 'var(--paper)'};
+    background: ${bg};
     color: ${dark ? t.deepInk : 'var(--ink)'};
     font-family: 'Noto Sans KR', sans-serif;
     word-break: keep-all;
@@ -102,7 +106,7 @@ ${fontFaces}
   .top { top: 80px; } .bottom { bottom: 80px; }
   .kicker { font-size: 32px; font-weight: 700; color: ${dark ? '#E6B9A6' : 'var(--accent)'}; letter-spacing: .06em; margin-bottom: 44px; }
   h1, h2, blockquote, .word, .key { font-family: 'Noto Serif KR', serif; }
-  .cover-title { font-size: 92px; line-height: 1.32; font-weight: 900; }
+  .cover-title { font-size: 92px; line-height: 1.32; font-weight: 900; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
   h2 { font-size: 80px; line-height: 1.3; font-weight: 900; }
   .rule { width: 90px; height: 6px; background: ${dark ? '#E6B9A6' : 'var(--accent)'}; margin: 56px 0; }
   .sub { font-size: 36px; opacity: .85; }
