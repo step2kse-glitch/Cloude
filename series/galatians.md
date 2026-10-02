@@ -8,9 +8,9 @@
 | 04 | gal-04 | 3:13 | 대신 받으신 저주 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_JQsLlQ0q/ |
 | 05 | gal-05 | 3:28 | 그리스도 안에서 하나 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_Jns0FqGk/ |
 | 06 | gal-06 | 4:6 | 아빠 아버지 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_JuGqFQih/ |
-| 07 | gal-07 | 5:1 | 다시 메지 말아야 할 멍에 | 카드 초안 |
-| 08 | gal-08 | 5:22–23 | 성령의 열매 | 카드 초안 |
-| 09 | gal-09 | 6:14 | 십자가 외에 자랑할 것이 없다 | 게시됨 2026-10-02 (07·08편보다 먼저 올라감) · https://www.instagram.com/p/Dd_RyueEcgj/ |
+| 07 | gal-07 | 5:1 | 다시 메지 말아야 할 멍에 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_SUSom8Ao/ |
+| 08 | gal-08 | 5:22–23 | 성령의 열매 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_Sch8Fe2M/ |
+| 09 | gal-09 | 6:14 | 십자가 외에 자랑할 것이 없다 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_SlLtmyvV/ |
 
 ## 표지 그림
 
