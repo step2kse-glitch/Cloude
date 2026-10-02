@@ -8,16 +8,18 @@
 | 04 | gal-04 | 3:13 | 대신 받으신 저주 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_JQsLlQ0q/ |
 | 05 | gal-05 | 3:28 | 그리스도 안에서 하나 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_Jns0FqGk/ |
 | 06 | gal-06 | 4:6 | 아빠 아버지 | 게시됨 2026-10-02 · https://www.instagram.com/p/Dd_JuGqFQih/ |
-| 07 | gal-07 | 5:1 | 다시 메지 말아야 할 멍에 | |
-| 08 | gal-08 | 5:22–23 | 성령의 열매 | |
-| 09 | gal-09 | 6:14 | 십자가 외에 자랑할 것이 없다 | |
+| 07 | gal-07 | 5:1 | 다시 메지 말아야 할 멍에 | 카드 초안 |
+| 08 | gal-08 | 5:22–23 | 성령의 열매 | 카드 초안 |
+| 09 | gal-09 | 6:14 | 십자가 외에 자랑할 것이 없다 | 카드 초안 |
 
 ## 표지 그림
 
 - 01–03편: `carousel/images/paul-scribe.webp` (앉아서 구술하는 바울), `bgPos: 30% center`
 - 04편부터: `carousel/images/paul-teaching.png` (서서 가르치는 바울), `bgPos: 38% center`
 
-- 7번째 장(핵심 한 줄, key): 04편부터 `carousel/images/cross-sunset.png` (노을 속 십자가), `bgPos: 22% center`
+- 07–09편 표지: `carousel/images/paul-scroll.png` (두루마리를 펼친 바울), `bgPos: 36% center`
+- 7번째 장(핵심 한 줄, key): 04–06편 `carousel/images/cross-sunset.png` (노을 속 십자가), `bgPos: 22% center`
+- 7번째 장(핵심 한 줄, key): 07–09편 `carousel/images/community-meal.png` (함께 나누는 식탁), `bgPos: 52% center`
 
 편마다 다른 그림을 받으면 그 편만 바꾼다.
 
