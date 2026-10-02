@@ -10,7 +10,9 @@
       "type": "cover",
       "kicker": "한 문장 묵상 01",
       "title": "사람의 기쁨인가,\n하나님의 기쁨인가",
-      "sub": "갈라디아서 1:10"
+      "sub": "갈라디아서 1:10",
+      "bg": "carousel/images/paul-scribe.webp",
+      "bgPos": "30% center"
     },
     {
       "type": "quote",

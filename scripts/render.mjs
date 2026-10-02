@@ -83,7 +83,7 @@ function page(s, index, total) {
   const dark = s.type === 'key' || s.type === 'cover';
   // 배경 사진(bg)이 있으면 짙은 음영을 덮어 글자가 잘 읽히게 한다.
   const bg = s.bg
-    ? `linear-gradient(180deg, rgba(20,28,40,.55) 0%, rgba(20,28,40,.72) 45%, rgba(20,28,40,.92) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') center / cover no-repeat`
+    ? `linear-gradient(180deg, rgba(20,28,40,.55) 0%, rgba(20,28,40,.72) 45%, rgba(20,28,40,.92) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / cover no-repeat`
     : dark ? t.deep : 'var(--paper)';
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <style>
@@ -102,6 +102,8 @@ ${fontFaces}
     padding: 130px 110px 150px;
     display: flex; flex-direction: column; justify-content: center;
   }
+  .frame.photo { justify-content: flex-end; padding-bottom: 190px; }
+  .frame.photo .rule { margin: 40px 0; }
   .frame::before {
     content: ''; position: absolute; inset: 40px;
     border: 2px solid ${dark ? 'rgba(244,238,227,.25)' : 'rgba(31,42,58,.15)'};
@@ -144,7 +146,7 @@ ${fontFaces}
   .next { margin-top: 90px; padding-top: 40px; border-top: 2px solid rgba(31,42,58,.15); font-size: 34px; line-height: 1.6; font-weight: 700; }
   .cta { margin-top: 20px; font-size: 30px; color: var(--accent); font-weight: 700; }
 </style></head><body>
-<div class="frame">
+<div class="frame${s.bg ? ' photo' : ''}">
   <div class="top"><span>${esc(episode.series)}</span><span>${esc(episode.label)}</span></div>
   ${slideBody(s)}
   <div class="bottom"><span>${esc(series.handle)}</span><span>${index + 1} / ${total}</span></div>
