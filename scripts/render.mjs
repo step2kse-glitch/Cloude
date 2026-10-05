@@ -83,7 +83,7 @@ function page(s, index, total) {
   const dark = s.type === 'key' || s.type === 'cover';
   // 배경 사진(bg)이 있으면 짙은 음영을 덮어 글자가 잘 읽히게 한다.
   const bg = s.bg
-    ? `linear-gradient(180deg, rgba(20,28,40,.55) 0%, rgba(20,28,40,.72) 45%, rgba(20,28,40,.92) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / cover no-repeat`
+    ? `linear-gradient(180deg, rgba(20,28,40,.55) 0%, rgba(20,28,40,.72) 45%, rgba(20,28,40,.92) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / ${s.bgSize ?? 'cover'} no-repeat`
     : dark ? t.deep : 'var(--paper)';
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <style>
