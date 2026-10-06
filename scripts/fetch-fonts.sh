@@ -14,3 +14,4 @@ get Noto+Serif+KR 900 NotoSerifKR-Black.ttf
 get Noto+Sans+KR 400 NotoSansKR-Regular.ttf
 get Noto+Sans+KR 500 NotoSansKR-Medium.ttf
 get Noto+Sans+KR 700 NotoSansKR-Bold.ttf
+get Noto+Serif+Hebrew 700 NotoSerifHebrew-Bold.ttf

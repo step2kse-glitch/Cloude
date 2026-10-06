@@ -25,6 +25,7 @@ const fontFaces = [
   ['Noto Sans KR', 400, 'NotoSansKR-Regular'],
   ['Noto Sans KR', 500, 'NotoSansKR-Medium'],
   ['Noto Sans KR', 700, 'NotoSansKR-Bold'],
+  ['Noto Serif Hebrew', 700, 'NotoSerifHebrew-Bold'],
 ]
   .map(([family, weight, file]) =>
     `@font-face{font-family:'${family}';font-weight:${weight};src:url('${fontDir}/${file}.ttf');}`)
@@ -118,6 +119,7 @@ ${fontFaces}
   .top { top: 80px; } .bottom { bottom: 80px; }
   .kicker { font-size: 32px; font-weight: 700; color: ${dark ? '#E6B9A6' : 'var(--accent)'}; letter-spacing: .06em; margin-bottom: 44px; }
   h1, h2, blockquote, .word, .key, .phrase, .prayer { font-family: 'Noto Serif KR', serif; }
+  .word { font-family: 'Noto Serif Hebrew', 'Noto Serif KR', serif; }
   .phrase { font-size: 76px; line-height: 1.35; font-weight: 900; color: var(--accent); }
   .prayer { font-size: 50px; line-height: 1.7; font-weight: 700; }
   .amen { margin-top: 40px; font-size: 40px; font-weight: 700; color: var(--accent); }
