@@ -83,8 +83,10 @@ function slideBody(s) {
 function page(s, index, total) {
   const dark = s.type === 'key' || s.type === 'cover';
   // 배경 사진(bg)이 있으면 짙은 음영을 덮어 글자가 잘 읽히게 한다.
+  // shade: "light" 이면 위쪽 음영을 옅게 해 사진을 밝게 보여 주고, 글자가 놓이는 아래쪽만 짙게 둔다.
+  const [a, b, c] = s.shade === 'light' ? [0.18, 0.4, 0.88] : [0.55, 0.72, 0.92];
   const bg = s.bg
-    ? `linear-gradient(180deg, rgba(20,28,40,.55) 0%, rgba(20,28,40,.72) 45%, rgba(20,28,40,.92) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / ${s.bgSize ?? 'cover'} no-repeat`
+    ? `linear-gradient(180deg, rgba(20,28,40,${a}) 0%, rgba(20,28,40,${b}) 45%, rgba(20,28,40,${c}) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / ${s.bgSize ?? 'cover'} no-repeat`
     : dark ? t.deep : 'var(--paper)';
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <style>
