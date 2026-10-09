@@ -1,0 +1,18 @@
+{
+  "title": "다이소 배수구 클리너 2주 써보니 냄새가 달라졌어요",
+  "mainKeyword": "다이소 배수구 클리너",
+  "persona": "30대 중반, 아이 둘 맞벌이 엄마. 배수구 냄새로 밤에 검색 중, 여러 제품 실패 경험",
+  "sponsored": false,
+  "tags": ["다이소배수구클리너", "배수구냄새", "살림꿀템", "다이소신상", "주방청소"],
+  "place": null,
+  "video": null,
+  "blocks": [
+    { "type": "text", "text": "※ 형식 예시 파일입니다. 실제 내용이 아니에요.\n싱크대 배수구, 닦아도 냄새가 다시 올라오죠." },
+    { "type": "image", "path": "input/photos/example.jpg", "caption": "다이소 배수구 클리너 대표컷" },
+    { "type": "subtitle", "text": "사용법은 이렇게" },
+    { "type": "text", "text": "첫 번째 문장\n두 번째 문장" },
+    { "type": "quote", "text": "핵심 문장 한 줄" },
+    { "type": "divider" },
+    { "type": "text", "text": "마무리 문단" }
+  ]
+}

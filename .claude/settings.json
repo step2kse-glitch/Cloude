@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(./**)",
+      "Edit(./**)",
+      "Write(./**)",
+      "Bash(node scripts/*)",
+      "Bash(npm install)",
+      "Bash(npm run *)",
+      "Bash(npx playwright install chromium)",
+      "Bash(ls *)",
+      "Bash(cp scripts/*)"
+    ],
+    "deny": [
+      "Read(./naver-profile/**)",
+      "Edit(./scripts/lib/common.js:installPublishGuard)"
+    ]
+  }
+}
