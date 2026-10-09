@@ -3,6 +3,23 @@
 사진 몇 장과 한 줄 메모를 주면, Claude Code가 사진을 직접 보고 네이버 상위노출 공식에 맞춰 글을 쓰고,
 승인하면 **임시저장까지** 해줍니다. 발행 버튼은 항상 내가 누릅니다.
 
+## 가장 쉬운 설치 (Mac)
+
+1. GitHub 저장소 페이지 → 초록색 **Code** 버튼 → **Download ZIP** → 다운로드 폴더에서 압축 풀기 (`Cloude-main` 폴더)
+2. Node.js가 없으면 nodejs.org 에서 LTS(.pkg) 설치
+3. **터미널** 앱(Spotlight에서 "터미널" 검색)을 열고 아래 한 줄 붙여넣기 → 엔터:
+   ```
+   cd ~/Downloads/Cloude-main && bash setup.command
+   ```
+   마지막에 뜨는 크롬 창에서 네이버 로그인
+4. 핸드폰으로 쓰려면 터미널에서:
+   ```
+   cd ~/Downloads/Cloude-main && bash start-phone.command
+   ```
+   → 핸드폰 Claude 앱 → Claude Code 에서 이 맥 세션 선택 → `/write ...`
+   - 터미널 창을 닫으면 연결이 끊겨요. 실행 중엔 맥이 잠자기 하지 않아요(뚜껑은 열어두기).
+   - 사진은 맥의 `input/photos/` 에 있어야 해요 (아이폰이면 AirDrop, 또는 iCloud Drive 폴더 연결).
+
 ## 가장 쉬운 설치 (Windows, 더블클릭)
 
 1. GitHub 저장소 페이지 → 초록색 **Code** 버튼 → **Download ZIP** → 압축 풀기
