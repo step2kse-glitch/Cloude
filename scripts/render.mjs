@@ -148,22 +148,26 @@ function slideBody(s) {
         <polygon points="${cx - 38},${ground - 398} ${cx},${ground - 470} ${cx + 38},${ground - 398}" fill="#06080F"/>
         <path d="M${cx - 18} ${ground} V${ground - 70} a18 18 0 0 1 36 0 V${ground} Z" fill="#FFCF7A" opacity=".35"/>
         <rect x="${cx - 62}" y="${ground - 150}" width="16" height="34" rx="8" fill="#FFCF7A" opacity=".4"/><rect x="${cx + 46}" y="${ground - 150}" width="16" height="34" rx="8" fill="#FFCF7A" opacity=".4"/>`;
-      const crossY = ground - 600;
-      const cross = (extra) => `<g ${extra}><rect x="${cx - 9}" y="${crossY}" width="18" height="128" rx="3"/><rect x="${cx - 44}" y="${crossY + 30}" width="88" height="18" rx="3"/></g>`;
+      // 십자가 크기: crossScale (기본 0.55). 첨탑 꼭대기(ground - 470)에 붙도록 위치를 맞춘다.
+      const k = s.crossScale ?? 0.55;
+      const ch = 128 * k, cw = 88 * k, bar = 18 * k;
+      const crossY = ground - 470 - ch + 2;
+      const midY = crossY + ch / 2;
+      const cross = (extra) => `<g ${extra}><rect x="${cx - bar / 2}" y="${crossY}" width="${bar}" height="${ch}" rx="2"/><rect x="${cx - cw / 2}" y="${crossY + 30 * k}" width="${cw}" height="${bar}" rx="2"/></g>`;
       const logo = pathToFileURL(path.join(root, s.logo)).href;
       return `<svg class="nt-bg" viewBox="0 0 ${width} ${height}">
           <defs>
             <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stop-color="#070B18"/><stop offset=".55" stop-color="#15203D"/><stop offset=".83" stop-color="#3B3150"/><stop offset="1" stop-color="#6A4A4A"/>
             </linearGradient>
-            <radialGradient id="halo" cx="${cx}" cy="${crossY + 64}" r="260" gradientUnits="userSpaceOnUse">
+            <radialGradient id="halo" cx="${cx}" cy="${midY}" r="${260 * k}" gradientUnits="userSpaceOnUse">
               <stop offset="0" stop-color="#FFE2A0" stop-opacity=".55"/><stop offset=".45" stop-color="#F2C14E" stop-opacity=".18"/><stop offset="1" stop-color="#F2C14E" stop-opacity="0"/>
             </radialGradient>
-            <filter id="bl"><feGaussianBlur stdDeviation="9"/></filter>
+            <filter id="bl"><feGaussianBlur stdDeviation="${9 * k}"/></filter>
           </defs>
           <rect width="${width}" height="${height}" fill="url(#sky)"/>
           ${stars}
-          <circle cx="${cx}" cy="${crossY + 64}" r="260" fill="url(#halo)"/>
+          <circle cx="${cx}" cy="${midY}" r="${260 * k}" fill="url(#halo)"/>
           ${layer(220, 480, 60, 120, '#141A2C', false)}
           ${layer(90, 300, 70, 130, '#0B0F1C', true)}
           ${church}
