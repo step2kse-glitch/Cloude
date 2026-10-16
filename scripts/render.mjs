@@ -95,8 +95,84 @@ function slideBody(s) {
         <div class="lt-big">${esc(s.big)}<span class="lt-win">${esc(s.win)}</span></div>
         <svg class="lt-brush" viewBox="0 0 600 40" preserveAspectRatio="none"><path d="M6 26 C120 8 260 34 380 18 S560 10 594 22" stroke="#B8862B" stroke-width="12" fill="none" stroke-linecap="round" opacity=".85"/></svg>
         <p class="lt-body">${esc(s.body)}</p>
-        <div class="lt-from"><span>${esc(s.from)}</span><img src="${logo}"></div>
-        <div class="lt-seal"><span>${esc(s.seal ?? 'INK')}</span></div>`;
+        <div class="lt-from"><span>${esc(s.from)}</span><img src="${logo}"></div>`;
+    }
+    case 'reveal': {
+      // 반전 카드: 찢어진 봉투 틈으로 빛이 새어 나오고, 그 빛 속에 마지막 한 문장이 드러난다.
+      const edge = (y0, seed) => {
+        let r = seed;
+        const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+        const pts = [];
+        for (let x = -20; x <= width + 20; x += 36) pts.push(`${x},${Math.round(y0 + (rnd() - 0.5) * 46)}`);
+        return pts;
+      };
+      const top = edge(s.top ?? 440, 7), bot = edge(s.bottom ?? 900, 31).reverse();
+      const logo = pathToFileURL(path.join(root, s.logo)).href;
+      return `<svg class="rv-tear" viewBox="0 0 ${width} ${height}">
+          <defs>
+            <radialGradient id="rvg" cx="50%" cy="50%" r="65%">
+              <stop offset="0" stop-color="#FFF8E6"/><stop offset=".55" stop-color="#F7DFA0"/><stop offset="1" stop-color="#E2A93B"/>
+            </radialGradient>
+            <filter id="rvglow" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+          </defs>
+          <polygon points="${[...top, ...bot].join(' ')}" fill="#F2C14E" opacity=".55" filter="url(#rvglow)"/>
+          <polygon points="${[...top, ...bot].join(' ')}" fill="url(#rvg)"/>
+        </svg>
+        <div class="rv-head"><div class="kicker">${esc(s.kicker)}</div><div class="rv-pre">${esc(s.pre)}</div></div>
+        <div class="rv-light"><div class="rv-small">${esc(s.small)}</div><div class="rv-big">${esc(s.big)}</div></div>
+        <div class="rv-foot"><p>${esc(s.body)}</p><div class="rv-brand"><img src="${logo}"><span>${esc(s.handle ?? series.handle)}</span></div></div>`;
+    }
+    case 'night': {
+      // 마지막 카드: 도시 야경 위로 빛나는 교회 십자가
+      let r = 11;
+      const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+      const ground = 1120;
+      const stars = Array.from({ length: 70 }, () =>
+        `<circle cx="${Math.round(rnd() * width)}" cy="${Math.round(rnd() * 620)}" r="${(rnd() * 1.6 + 0.6).toFixed(1)}" fill="#fff" opacity="${(rnd() * 0.6 + 0.25).toFixed(2)}"/>`).join('');
+      const layer = (min, max, wmin, wmax, color, windows) => {
+        let out = '', x = -30;
+        while (x < width + 30) {
+          const w = Math.round(wmin + rnd() * (wmax - wmin)), h = Math.round(min + rnd() * (max - min));
+          out += `<rect x="${x}" y="${ground - h}" width="${w}" height="${h + 2}" fill="${color}"/>`;
+          if (windows) for (let wy = ground - h + 18; wy < ground - 14; wy += 26)
+            for (let wx = x + 12; wx < x + w - 14; wx += 22)
+              if (rnd() < 0.22) out += `<rect x="${wx}" y="${wy}" width="9" height="12" fill="#FFD58A" opacity="${(rnd() * 0.5 + 0.45).toFixed(2)}"/>`;
+          x += w + Math.round(rnd() * 8);
+        }
+        return out;
+      };
+      const cx = s.crossX ?? 760;
+      const church = `<rect x="${cx - 95}" y="${ground - 190}" width="190" height="192" fill="#06080F"/>
+        <polygon points="${cx - 110},${ground - 188} ${cx},${ground - 270} ${cx + 110},${ground - 188}" fill="#06080F"/>
+        <rect x="${cx - 30}" y="${ground - 400}" width="60" height="150" fill="#06080F"/>
+        <polygon points="${cx - 38},${ground - 398} ${cx},${ground - 470} ${cx + 38},${ground - 398}" fill="#06080F"/>
+        <path d="M${cx - 18} ${ground} V${ground - 70} a18 18 0 0 1 36 0 V${ground} Z" fill="#FFCF7A" opacity=".35"/>
+        <rect x="${cx - 62}" y="${ground - 150}" width="16" height="34" rx="8" fill="#FFCF7A" opacity=".4"/><rect x="${cx + 46}" y="${ground - 150}" width="16" height="34" rx="8" fill="#FFCF7A" opacity=".4"/>`;
+      const crossY = ground - 600;
+      const cross = (extra) => `<g ${extra}><rect x="${cx - 9}" y="${crossY}" width="18" height="128" rx="3"/><rect x="${cx - 44}" y="${crossY + 30}" width="88" height="18" rx="3"/></g>`;
+      const logo = pathToFileURL(path.join(root, s.logo)).href;
+      return `<svg class="nt-bg" viewBox="0 0 ${width} ${height}">
+          <defs>
+            <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#070B18"/><stop offset=".55" stop-color="#15203D"/><stop offset=".83" stop-color="#3B3150"/><stop offset="1" stop-color="#6A4A4A"/>
+            </linearGradient>
+            <radialGradient id="halo" cx="${cx}" cy="${crossY + 64}" r="260" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#FFE2A0" stop-opacity=".55"/><stop offset=".45" stop-color="#F2C14E" stop-opacity=".18"/><stop offset="1" stop-color="#F2C14E" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="bl"><feGaussianBlur stdDeviation="9"/></filter>
+          </defs>
+          <rect width="${width}" height="${height}" fill="url(#sky)"/>
+          ${stars}
+          <circle cx="${cx}" cy="${crossY + 64}" r="260" fill="url(#halo)"/>
+          ${layer(220, 480, 60, 120, '#141A2C', false)}
+          ${layer(90, 300, 70, 130, '#0B0F1C', true)}
+          ${church}
+          ${cross('fill="#FFD27A" filter="url(#bl)" opacity=".95"')}
+          ${cross('fill="#FFF6DD"')}
+          <rect x="0" y="${ground}" width="${width}" height="${height - ground}" fill="#05070D"/>
+        </svg>
+        <div class="nt-head"><div class="kicker">${esc(s.kicker)}</div><div class="nt-big">${esc(s.big)}<span class="nt-win">${esc(s.win ?? '')}</span></div></div>
+        <div class="nt-foot"><span>${esc(s.body)}</span><img src="${logo}"></div>`;
     }
     default:
       throw new Error(`알 수 없는 슬라이드 타입: ${s.type}`);
@@ -187,12 +263,24 @@ ${fontFaces}
   .lt-body { margin-top: 54px; font-size: 38px; line-height: 1.7; color: rgba(43,33,24,.85); }
   .lt-from { margin-top: 56px; display: flex; align-items: center; gap: 26px; font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 700; }
   .lt-from img { width: 130px; height: 130px; }
-  .lt-seal { position: absolute; right: 110px; top: 105px; width: 170px; height: 170px; border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #C9473A, #8E2219 70%); transform: rotate(-12deg);
-    box-shadow: 0 6px 16px rgba(90,20,10,.35), inset 0 0 0 10px rgba(255,255,255,.08);
-    display: grid; place-items: center; }
-  .lt-seal span { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 46px; color: rgba(255,235,220,.9); letter-spacing: .08em;
-    border: 3px solid rgba(255,235,220,.55); border-radius: 50%; width: 120px; height: 120px; display: grid; place-items: center; }
+  .rv-tear { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .rv-head, .rv-light, .rv-foot { position: absolute; left: 110px; right: 110px; text-align: center; }
+  .rv-head { top: 175px; } .rv-head .kicker { margin-bottom: 26px; }
+  .rv-pre { font-family: 'Noto Serif KR', serif; font-size: 44px; line-height: 1.5; font-weight: 700; color: rgba(244,238,227,.88); }
+  .rv-light { top: 515px; color: #2A1D12; }
+  .rv-small { font-family: 'Noto Serif KR', serif; font-size: 62px; font-weight: 900; letter-spacing: -.01em; }
+  .rv-big { font-family: 'Noto Serif KR', serif; font-size: 190px; line-height: 1.05; font-weight: 900; letter-spacing: -.02em; }
+  .rv-foot { top: 985px; }
+  .rv-foot p { font-size: 36px; line-height: 1.6; color: rgba(244,238,227,.85); }
+  .rv-brand { margin-top: 30px; display: flex; justify-content: center; align-items: center; gap: 22px; font-size: 34px; font-weight: 700; color: #F4EEE3; }
+  .rv-brand img { width: 120px; height: 120px; }
+  .nt-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .nt-head { position: absolute; left: 110px; right: 110px; top: 170px; }
+  .nt-head .kicker { margin-bottom: 30px; }
+  .nt-big { font-family: 'Noto Serif KR', serif; font-size: 100px; line-height: 1.25; font-weight: 900; color: #FFF8EA; text-shadow: 0 4px 30px rgba(0,0,0,.5); }
+  .nt-win { color: #F2C14E; }
+  .nt-foot { position: absolute; left: 110px; right: 110px; top: 1135px; display: flex; justify-content: space-between; align-items: center; font-size: 34px; font-weight: 500; white-space: nowrap; color: rgba(244,238,227,.88); }
+  .nt-foot img { width: 96px; height: 96px; }
   .cta { margin-top: 20px; font-size: 30px; color: var(--accent); font-weight: 700; }
 </style></head><body>
 <div class="frame${s.bg ? ' photo' : ''}">

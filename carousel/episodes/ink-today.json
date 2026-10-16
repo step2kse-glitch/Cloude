@@ -44,14 +44,12 @@
       ]
     },
     {
-      "type": "letter",
-      "to": "To. 오늘을 살아낸 당신에게",
-      "pre": "봉투를 열어 보니, 이렇게 쓰여 있었습니다.",
+      "type": "night",
+      "kicker": "오늘도 복음",
       "big": "오늘도\n복음으로\n",
-      "win": "승리!",
-      "body": "하나님은 오늘도 당신이라는 편지를 쓰고 계십니다.\n내일의 편지도 함께 받아 보세요.",
-      "from": "From. 생각공방",
-      "logo": "brand/thinking-atelier-logo-dark.png"
+      "body": "팔로우하고 내일의 복음도 받아 보세요",
+      "logo": "brand/thinking-atelier-logo-transparent.png",
+      "win": "승리!"
     }
   ]
 }
