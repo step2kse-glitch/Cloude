@@ -87,17 +87,31 @@ function slideBody(s) {
         <div class="rule"></div>
         <p class="body">${esc(s.body)}</p>
         <div class="follow"><img src="${pathToFileURL(path.join(root, s.logo)).href}"><span>${esc(s.handle ?? series.handle)}</span></div>`;
+    case 'letter': {
+      // 반전 카드: 어두운 봉투(앞 카드들)를 열면 나오는 밝은 편지지
+      const logo = pathToFileURL(path.join(root, s.logo)).href;
+      return `<div class="lt-to">${esc(s.to)}</div>
+        <div class="lt-pre">${esc(s.pre)}</div>
+        <div class="lt-big">${esc(s.big)}<span class="lt-win">${esc(s.win)}</span></div>
+        <svg class="lt-brush" viewBox="0 0 600 40" preserveAspectRatio="none"><path d="M6 26 C120 8 260 34 380 18 S560 10 594 22" stroke="#B8862B" stroke-width="12" fill="none" stroke-linecap="round" opacity=".85"/></svg>
+        <p class="lt-body">${esc(s.body)}</p>
+        <div class="lt-from"><span>${esc(s.from)}</span><img src="${logo}"></div>
+        <div class="lt-seal"><span>${esc(s.seal ?? 'INK')}</span></div>`;
+    }
     default:
       throw new Error(`알 수 없는 슬라이드 타입: ${s.type}`);
   }
 }
 
 function page(s, index, total) {
-  const dark = skin || s.type === 'key' || s.type === 'cover';
+  const letter = s.type === 'letter';
+  const dark = !letter && (skin || s.type === 'key' || s.type === 'cover');
   // 배경 사진(bg)이 있으면 짙은 음영을 덮어 글자가 잘 읽히게 한다.
   // shade: "light" 이면 위쪽 음영을 옅게 해 사진을 밝게 보여 주고, 글자가 놓이는 아래쪽만 짙게 둔다.
   const [a, b, c] = s.shade === 'light' ? [0.18, 0.4, 0.88] : [0.55, 0.72, 0.92];
-  const bg = s.bg
+  const bg = letter
+    ? `radial-gradient(ellipse at 30% 20%, rgba(255,255,255,.55), transparent 60%), radial-gradient(ellipse at 80% 90%, rgba(150,110,60,.18), transparent 55%), repeating-linear-gradient(0deg, transparent 0 63px, rgba(140,110,70,.13) 63px 65px), #F3EAD8`
+    : s.bg
     ? `linear-gradient(180deg, rgba(20,28,40,${a}) 0%, rgba(20,28,40,${b}) 45%, rgba(20,28,40,${c}) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / ${s.bgSize ?? 'cover'} no-repeat`
     : skin ? `${t.deep} url('${pathToFileURL(path.join(root, 'brand/reel-bg-leather.png')).href}') center / cover no-repeat`
     : dark ? t.deep : 'var(--paper)';
@@ -109,7 +123,7 @@ ${fontFaces}
   html, body { width:${width}px; height:${height}px; }
   body {
     background: ${bg};
-    color: ${dark ? t.deepInk : 'var(--ink)'};
+    color: ${letter ? '#2B2118' : dark ? t.deepInk : 'var(--ink)'};
     font-family: 'Noto Sans KR', sans-serif;
     word-break: keep-all;
   }
@@ -122,14 +136,14 @@ ${fontFaces}
   .frame.photo .rule { margin: 40px 0; }
   .frame::before {
     content: ''; position: absolute; inset: 40px;
-    border: 2px solid ${dark ? 'rgba(244,238,227,.25)' : 'rgba(31,42,58,.15)'};
+    border: 2px solid ${letter ? 'rgba(43,33,24,.18)' : dark ? 'rgba(244,238,227,.25)' : 'rgba(31,42,58,.15)'};
     pointer-events: none;
   }
   .top, .bottom {
     position: absolute; left: 110px; right: 110px;
     display: flex; justify-content: space-between;
     font-size: 26px; letter-spacing: .04em;
-    color: ${dark ? 'rgba(244,238,227,.7)' : 'var(--muted)'};
+    color: ${letter ? 'rgba(43,33,24,.55)' : dark ? 'rgba(244,238,227,.7)' : 'var(--muted)'};
   }
   .top { top: 80px; } .bottom { bottom: 80px; }
   .kicker { font-size: 32px; font-weight: 700; color: ${dark ? soft : 'var(--accent)'}; letter-spacing: .06em; margin-bottom: 44px; }
@@ -165,6 +179,20 @@ ${fontFaces}
   .next { margin-top: 90px; padding-top: 40px; border-top: 2px solid ${dark ? 'rgba(244,238,227,.2)' : 'rgba(31,42,58,.15)'}; font-size: 34px; line-height: 1.6; font-weight: 700; }
   .follow { margin-top: 70px; display: flex; align-items: center; gap: 30px; font-size: 40px; font-weight: 700; }
   .follow img { width: 150px; height: 150px; }
+  .lt-to { font-family: 'Noto Serif KR', serif; font-size: 36px; font-weight: 700; color: rgba(43,33,24,.6); }
+  .lt-pre { margin-top: 70px; font-size: 38px; color: rgba(43,33,24,.75); }
+  .lt-big { margin-top: 18px; font-family: 'Noto Serif KR', serif; font-size: 118px; line-height: 1.22; font-weight: 900; color: #2B2118; }
+  .lt-win { color: #9A2C22; }
+  .lt-brush { width: 470px; height: 34px; margin: 6px 0 0 4px; display: block; }
+  .lt-body { margin-top: 54px; font-size: 38px; line-height: 1.7; color: rgba(43,33,24,.85); }
+  .lt-from { margin-top: 56px; display: flex; align-items: center; gap: 26px; font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 700; }
+  .lt-from img { width: 130px; height: 130px; }
+  .lt-seal { position: absolute; right: 110px; top: 105px; width: 170px; height: 170px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #C9473A, #8E2219 70%); transform: rotate(-12deg);
+    box-shadow: 0 6px 16px rgba(90,20,10,.35), inset 0 0 0 10px rgba(255,255,255,.08);
+    display: grid; place-items: center; }
+  .lt-seal span { font-family: 'Noto Serif KR', serif; font-weight: 900; font-size: 46px; color: rgba(255,235,220,.9); letter-spacing: .08em;
+    border: 3px solid rgba(255,235,220,.55); border-radius: 50%; width: 120px; height: 120px; display: grid; place-items: center; }
   .cta { margin-top: 20px; font-size: 30px; color: var(--accent); font-weight: 700; }
 </style></head><body>
 <div class="frame${s.bg ? ' photo' : ''}">
