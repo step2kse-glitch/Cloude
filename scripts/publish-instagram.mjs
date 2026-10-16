@@ -5,6 +5,8 @@
 //   node scripts/publish-instagram.mjs gal-01 --yes    # 실제 게시
 //   node scripts/publish-instagram.mjs --check         # 토큰과 계정 확인
 //   node scripts/publish-instagram.mjs --refresh       # 토큰 기한 연장 (60일)
+//   node scripts/publish-instagram.mjs ink-cn-02 --video-url <MP4 주소> --yes
+//                                                      # 첫 장에 영상을 넣고 카드를 이어 붙인 한 세트로 게시
 //
 // 필요한 것:
 //   - 환경 변수 IG_ACCESS_TOKEN (Instagram 로그인 API, instagram_business_content_publish 권한)
@@ -39,8 +41,8 @@ function call(method, url, params = {}) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function waitReady(id) {
-  for (let i = 0; i < 30; i++) {
+async function waitReady(id, tries = 30) {
+  for (let i = 0; i < tries; i++) {
     const { status_code } = call('GET', `${API}/${id}`, { fields: 'status_code' });
     if (status_code === 'FINISHED') return;
     if (status_code === 'ERROR' || status_code === 'EXPIRED') throw new Error(`컨테이너 ${id}: ${status_code}`);
@@ -73,13 +75,17 @@ const publish = process.argv.includes('--yes');
 const files = (await readdir(path.join(root, 'output', id))).filter((f) => /^\d+\.jpg$/.test(f)).sort();
 const caption = (await readFile(path.join(root, `carousel/episodes/${id}.caption.txt`), 'utf8')).trim();
 const urls = files.map((f) => `${RAW}/output/${id}/${f}`);
+const vi = process.argv.indexOf('--video-url');
+const videoUrl = vi > 0 ? process.argv[vi + 1] : undefined;
 
 console.log(`[${id}] 카드 ${files.length}장, 캡션 ${caption.length}자`);
 urls.forEach((u) => console.log('  ', u));
 
-if (files.length < 2) throw new Error('캐러셀은 2장 이상이어야 합니다.');
-if (files.length > MAX_ITEMS) {
-  throw new Error(`인스타그램 API 캐러셀은 최대 ${MAX_ITEMS}장입니다. 지금 ${files.length}장이라 줄여야 합니다.`);
+if (videoUrl) console.log('   + 첫 장 영상:', videoUrl.slice(0, 80) + '…');
+const count = files.length + (videoUrl ? 1 : 0);
+if (count < 2) throw new Error('캐러셀은 2장 이상이어야 합니다.');
+if (count > MAX_ITEMS) {
+  throw new Error(`인스타그램 API 캐러셀은 최대 ${MAX_ITEMS}장입니다. 지금 ${count}장이라 줄여야 합니다.`);
 }
 if (caption.length > 2200) throw new Error('캡션은 2,200자 이하여야 합니다.');
 
@@ -89,6 +95,12 @@ if (!publish) {
 }
 
 const children = [];
+if (videoUrl) {
+  const { id: v } = call('POST', `${API}/me/media`, { media_type: 'VIDEO', video_url: videoUrl, is_carousel_item: 'true' });
+  console.log('  ✓ 영상 등록', v);
+  await waitReady(v, 60);
+  children.push(v);
+}
 for (const image_url of urls) {
   const { id: child } = call('POST', `${API}/me/media`, { image_url, is_carousel_item: 'true' });
   children.push(child);
