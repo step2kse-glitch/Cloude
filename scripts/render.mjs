@@ -15,7 +15,12 @@ if (!id) {
 const series = JSON.parse(await readFile(path.join(root, 'carousel/series.json'), 'utf8'));
 const episode = JSON.parse(await readFile(path.join(root, `carousel/episodes/${id}.json`), 'utf8'));
 const { width, height } = series.size;
-const t = series.theme;
+// skin: "leather" 이면 릴스와 같은 성경 가죽 배경에 흰 글씨·노란 강조색을 쓴다.
+const skin = episode.skin === 'leather';
+const t = skin
+  ? { ...series.theme, paper: '#1c1714', ink: '#F4EEE3', muted: 'rgba(244,238,227,.62)', accent: '#F2C14E', deep: '#1c1714', deepInk: '#F4EEE3' }
+  : series.theme;
+const soft = skin ? t.accent : '#E6B9A6';
 
 // 폰트는 scripts/fetch-fonts.sh 로 carousel/fonts/ 에 받아 둔다.
 const fontDir = pathToFileURL(path.join(root, 'carousel/fonts')).href;
@@ -75,18 +80,26 @@ function slideBody(s) {
         <div class="cite">${esc(s.cite)}</div>
         <div class="next">${esc(s.next)}</div>
         <div class="cta">${esc(s.cta ?? '저장해 두고 한 주 동안 묵상해 보세요')}</div>`;
+    case 'follow':
+      // 마지막 카드: 응원 인사 + 팔로우 안내
+      return `<div class="kicker">${esc(s.kicker)}</div>
+        <div class="phrase">${esc(s.phrase)}</div>
+        <div class="rule"></div>
+        <p class="body">${esc(s.body)}</p>
+        <div class="follow"><img src="${pathToFileURL(path.join(root, s.logo)).href}"><span>${esc(s.handle ?? series.handle)}</span></div>`;
     default:
       throw new Error(`알 수 없는 슬라이드 타입: ${s.type}`);
   }
 }
 
 function page(s, index, total) {
-  const dark = s.type === 'key' || s.type === 'cover';
+  const dark = skin || s.type === 'key' || s.type === 'cover';
   // 배경 사진(bg)이 있으면 짙은 음영을 덮어 글자가 잘 읽히게 한다.
   // shade: "light" 이면 위쪽 음영을 옅게 해 사진을 밝게 보여 주고, 글자가 놓이는 아래쪽만 짙게 둔다.
   const [a, b, c] = s.shade === 'light' ? [0.18, 0.4, 0.88] : [0.55, 0.72, 0.92];
   const bg = s.bg
     ? `linear-gradient(180deg, rgba(20,28,40,${a}) 0%, rgba(20,28,40,${b}) 45%, rgba(20,28,40,${c}) 100%), url('${pathToFileURL(path.join(root, s.bg)).href}') ${s.bgPos ?? 'center'} / ${s.bgSize ?? 'cover'} no-repeat`
+    : skin ? `${t.deep} url('${pathToFileURL(path.join(root, 'brand/reel-bg-leather.png')).href}') center / cover no-repeat`
     : dark ? t.deep : 'var(--paper)';
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <style>
@@ -119,7 +132,7 @@ ${fontFaces}
     color: ${dark ? 'rgba(244,238,227,.7)' : 'var(--muted)'};
   }
   .top { top: 80px; } .bottom { bottom: 80px; }
-  .kicker { font-size: 32px; font-weight: 700; color: ${dark ? '#E6B9A6' : 'var(--accent)'}; letter-spacing: .06em; margin-bottom: 44px; }
+  .kicker { font-size: 32px; font-weight: 700; color: ${dark ? soft : 'var(--accent)'}; letter-spacing: .06em; margin-bottom: 44px; }
   h1, h2, blockquote, .word, .key, .phrase, .prayer { font-family: 'Noto Serif KR', serif; }
   .word { font-family: 'Noto Serif Hebrew', 'Noto Serif KR', serif; }
   .phrase { font-size: 76px; line-height: 1.35; font-weight: 900; color: var(--accent); }
@@ -127,7 +140,7 @@ ${fontFaces}
   .amen { margin-top: 40px; font-size: 40px; font-weight: 700; color: var(--accent); }
   .cover-title { font-size: 92px; line-height: 1.32; font-weight: 900; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
   h2 { font-size: 80px; line-height: 1.3; font-weight: 900; }
-  .rule { width: 90px; height: 6px; background: ${dark ? '#E6B9A6' : 'var(--accent)'}; margin: 56px 0; }
+  .rule { width: 90px; height: 6px; background: ${dark ? soft : 'var(--accent)'}; margin: 56px 0; }
   .sub { font-size: 36px; opacity: .85; }
   .body { font-size: 40px; line-height: 1.75; color: ${dark ? t.deepInk : 'var(--ink)'}; }
   .mark { font-family: 'Noto Serif KR', serif; font-size: 200px; line-height: .6; color: var(--accent); height: 100px; }
@@ -149,7 +162,9 @@ ${fontFaces}
     background: var(--accent); color: var(--paper);
     font-size: 32px; font-weight: 700; display: grid; place-items: center;
   }
-  .next { margin-top: 90px; padding-top: 40px; border-top: 2px solid rgba(31,42,58,.15); font-size: 34px; line-height: 1.6; font-weight: 700; }
+  .next { margin-top: 90px; padding-top: 40px; border-top: 2px solid ${dark ? 'rgba(244,238,227,.2)' : 'rgba(31,42,58,.15)'}; font-size: 34px; line-height: 1.6; font-weight: 700; }
+  .follow { margin-top: 70px; display: flex; align-items: center; gap: 30px; font-size: 40px; font-weight: 700; }
+  .follow img { width: 150px; height: 150px; }
   .cta { margin-top: 20px; font-size: 30px; color: var(--accent); font-weight: 700; }
 </style></head><body>
 <div class="frame${s.bg ? ' photo' : ''}">
