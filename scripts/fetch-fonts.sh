@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Noto Serif KR / Noto Sans KR (SIL OFL 1.1) 을 carousel/fonts/ 로 내려받는다.
+# Noto Serif KR · Sans KR · Serif(그리스어) · Serif Hebrew (SIL OFL 1.1) 을 carousel/fonts/ 로 내려받는다.
 set -euo pipefail
 dir="$(cd "$(dirname "$0")/.." && pwd)/carousel/fonts"
 mkdir -p "$dir"
@@ -15,3 +15,4 @@ get Noto+Sans+KR 400 NotoSansKR-Regular.ttf
 get Noto+Sans+KR 500 NotoSansKR-Medium.ttf
 get Noto+Sans+KR 700 NotoSansKR-Bold.ttf
 get Noto+Serif+Hebrew 700 NotoSerifHebrew-Bold.ttf
+get Noto+Serif 700 NotoSerif-Bold.ttf
