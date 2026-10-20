@@ -16,13 +16,20 @@
 
 ```
 CLAUDE.md                 이 파일 (마스터 지침 + 버그 해결 기록)
-.claude/commands/         /write /learn-style /analyze-trends /setup-login
+.claude/commands/         /write /reels /learn-style /analyze-trends /setup-login
 .claude/settings.json     폴더 내 작업 자동승인
 scripts/naver_login.js    로그인 1회 (사용자가 브라우저에서 직접, 비밀번호 저장 안 함)
 scripts/naver_draft.js    초안 JSON → 임시저장 (글·사진·태그·지도·동영상·소제목 서식)
 scripts/mosaic.js         사진 개인정보 모자이크 (원본 보존)
 scripts/probe_selectors.js 셀렉터 진단용 DOM 덤프 (읽기 전용)
 scripts/lib/common.js     공용 헬퍼 (브라우저 실행, 프레임, 발행 가드, 한글 입력)
+scripts/reels_render.js   릴스 스토리보드 → 1080x1920 mp4 + 자동 검증 + check.jpg + captions.txt
+scripts/reels_frames.js   영상 미리보기 시트 (Claude가 영상 장면·시간을 보기 위함, 읽기 전용)
+scripts/reels_studio.js   릴스 스튜디오 웹앱 서버 (핸드폰 접속, claude -p 로 /reels --job 호출)
+scripts/lib/reels.js      릴스 공용 헬퍼 (ffmpeg 경로, probe, 작업 폴더, 크롬 자막 렌더)
+studio/index.html         스튜디오 화면 (내 영상 / 만들기 / 게시·예약 / 설정)
+drafts/reels/<ID>/        릴스 작업 폴더 (job.json, media/, storyboard.json, review.md, reel.mp4 …)
+input/bgm/                배경음악 (저작권 프리 음원만)
 data/                     profile / blogger-profile / authority-lines / photo-guide /
                           sponsored-disclosure / trends / style-profile
 input/photos/ input/videos/   사용자가 넣는 소재
@@ -173,6 +180,22 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
 - 주 2~3회 주기 (하루 2건 이상 금지)
 - 협찬 표기 육안 확인 (협찬 글)
 - 브라우저 자동화는 네이버 약관상 회색지대 — 본인 계정, 하루 1~2건
+
+## 릴스 (/reels · 릴스 스튜디오)
+
+- 공식: `data/reels-guide.md`. 블로그와 같은 절대 규칙(사실·협찬·사생활) 적용. **게시(업로드) 자동화 금지** — mp4와 문구까지만.
+- 협찬 영상: `sponsored: true` + `disclosure` 라벨이 영상 전 구간 좌상단에 렌더링되고, 게시 문구 첫 줄에도 들어간다. 렌더러가 누락·거짓 부인 표현을 오류로 막는다.
+- 개인정보: 컷별 `blur` 영역(보이는 화면 기준 0~1)으로 모자이크. 원본 파일은 건드리지 않는다.
+- 스튜디오 모드(`/reels --job <ID>`)는 비대화형 → 질문 대신 `review.md`의 "확인 필요"에 적고, 렌더링은 사용자가 앱에서 "영상 만들기"를 눌러 승인할 때만.
+- 자가 검증: 렌더 후 `[자동 검증]` 전부 ✅ + `check.jpg`를 Read로 육안 확인해야 완료 보고.
+
+### 릴스 실측 지식
+- 정적 ffmpeg 빌드(ffmpeg-static 7.0.2)에는 `drawtext` 필터가 없다 → 자막은 Playwright 크롬으로 투명 PNG를 만들어 `overlay`한다. ffmpeg 자막 필터로 되돌리지 말 것.
+- 자막 외곽선은 `-webkit-text-stroke`가 얇게 보여서 16방향 `text-shadow` 링으로 그린다.
+- ffprobe-static은 4.x라 오래됐지만 probe에는 충분. 영상 회전(side_data rotation)은 probe에서 가로·세로를 바꿔 보정한다.
+- 사진은 sharp `.rotate()`로 EXIF 방향을 먼저 확정한 뒤 2배 캔버스(2160x3840)에서 zoompan → 떨림 감소.
+- 세그먼트를 같은 규격으로 만든 뒤 concat(-c copy) → 최종 1회 인코딩(자막·BGM·loudnorm -14 LUFS).
+- 작업 ID에 한글 슬러그가 들어간다 → ID 검사 정규식은 `[\w가-힣.-]`.
 
 ## 버그 해결 기록
 

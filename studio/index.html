@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F6F5F0">
+<title>릴스 스튜디오</title>
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#F6F5F0;--card:#fff;--ink:#1D1D1B;--sub:#6B6A64;--line:#E7E5DC;--y:#F7E14B;--y2:#FCF4BC;--yk:#8A7A12;--ok:#2F7D4F;--bad:#C0392B;--r:24px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;word-break:keep-all}
+body{padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto;padding:0 18px}
+header.top{position:sticky;top:0;z-index:5;background:rgba(246,245,240,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+.brand{font-weight:800;font-size:17px}
+.conn{font-size:13px;color:var(--sub);display:flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;background:#bbb;display:inline-block}
+.dot.on{background:var(--ok)} .dot.off{background:var(--bad)}
+.eyebrow{font-size:14px;color:var(--sub);font-weight:700;margin:26px 0 6px}
+h1{font-size:34px;margin:0;letter-spacing:-.5px}
+h1 i{font-style:normal;color:var(--yk)}
+.lead{color:var(--sub);font-size:16px;line-height:1.6;margin:10px 0 22px}
+.row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.btn{border:0;border-radius:18px;padding:14px 20px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink);background:var(--y);display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.ghost{background:#fff;border:1.5px solid var(--line)}
+.btn.small{padding:9px 14px;font-size:14px;border-radius:14px}
+.btn.block{width:100%;justify-content:center}
+.btn:disabled{opacity:.45;cursor:default}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin:14px 0}
+.hero{background:var(--y2);border-color:#F1E6A0;padding:28px}
+.hero .chip{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.hero .chip:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--yk)}
+.hero h2{font-size:32px;line-height:1.3;margin:18px 0 14px;letter-spacing:-.5px}
+.hero h2 span{color:#4D4310}
+.hero p{color:#4a4840;line-height:1.7;margin:0 0 20px}
+.hero small{display:block;margin-top:16px;color:var(--sub)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:20px;padding:16px;text-align:center}
+.stat b{display:block;font-size:26px;margin-top:4px}
+.stat span{color:var(--sub);font-size:13px}
+.job{display:flex;gap:14px;align-items:center;padding:12px;border-radius:20px;background:#fff;border:1px solid var(--line);margin:10px 0;cursor:pointer;color:inherit;text-decoration:none}
+.job img,.job .ph{width:58px;height:96px;object-fit:cover;border-radius:12px;background:#eee;flex:none}
+.job .t{font-weight:800;font-size:16px;margin-bottom:6px}
+.job .d{color:var(--sub);font-size:13px}
+.badge{display:inline-block;font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px;background:#eee;color:#555}
+.badge.uploaded{background:#eee}.badge.storyboarding,.badge.rendering{background:var(--y2);color:var(--yk)}
+.badge.storyboard{background:#E8F0FF;color:#2A57B8}.badge.rendered{background:#E4F3EA;color:var(--ok)}
+.badge.error{background:#FBE5E2;color:var(--bad)}.badge.posted{background:#1D1D1B;color:#fff}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt{border:2px solid var(--line);border-radius:22px;padding:18px;cursor:pointer;background:#fff;text-align:left;font-family:inherit;color:inherit}
+.opt.on{border-color:#A99418;background:#FFFBE3}
+.opt .ic{font-size:30px}
+.opt b{display:block;font-size:18px;margin:10px 0 6px}
+.opt span{color:var(--sub);font-size:14px;line-height:1.5}
+.opt.on span{color:#7A6A0E}
+label.f{display:block;font-weight:800;font-size:17px;margin:24px 0 10px}
+input[type=text],input[type=datetime-local],input[type=number],textarea,select{width:100%;border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;font-size:16px;font-family:inherit;background:#FAFAF7;color:var(--ink)}
+textarea{min-height:90px;resize:vertical;line-height:1.5}
+.hint{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.5}
+.files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.files .fi{width:72px;height:72px;border-radius:12px;background:#eee center/cover;position:relative;font-size:11px;display:flex;align-items:flex-end;overflow:hidden}
+.files .fi span{background:rgba(0,0,0,.55);color:#fff;width:100%;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick{border:2px dashed var(--line);border-radius:18px;padding:18px;text-align:center;color:var(--sub);cursor:pointer;display:block}
+.bar{height:8px;background:#eee;border-radius:9px;overflow:hidden;margin-top:12px}.bar i{display:block;height:100%;background:var(--y);width:0}
+.srow{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--line);font-size:17px}
+.srow:last-child{border-bottom:0}
+.srow b{color:var(--yk)} .srow b.no{color:var(--ink)} .srow b.bad{color:var(--bad)}
+.ok-pill{background:#E4F3EA;color:var(--ok);font-weight:800;font-size:14px;padding:8px 14px;border-radius:14px}
+.cut{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+.cut:last-child{border-bottom:0}
+.cut .th{width:72px;height:128px;border-radius:12px;background:#222 center/cover;flex:none;position:relative;overflow:hidden}
+.cut .th video{width:100%;height:100%;object-fit:cover}
+.cut .th em{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.6);color:#fff;font-style:normal;font-size:11px;padding:2px 6px;border-radius:6px}
+.cut .body{flex:1;min-width:0}
+.cut .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.cut .meta input,.cut .meta select{width:auto;padding:8px 10px;font-size:14px;border-radius:12px;flex:1;min-width:70px}
+.cut textarea{min-height:60px;font-size:15px;padding:10px 12px}
+.cut .lab{font-size:12px;color:var(--sub);margin:0 0 4px}
+pre.rev{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.65;background:#FAFAF7;border-radius:16px;padding:16px;margin:0;max-height:420px;overflow:auto}
+video.player{width:100%;max-height:72vh;border-radius:18px;background:#000;display:block}
+img.sheet{width:100%;border-radius:12px}
+.chk{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:15px}
+.chk input{width:22px;height:22px;accent-color:#A99418}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.on{opacity:1}
+.spin{width:22px;height:22px;border:3px solid #E6D77A;border-top-color:var(--yk);border-radius:50%;animation:sp 1s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{background:#FBE5E2;color:#7c241a;border-radius:16px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.5}
+.muted{color:var(--sub)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:10}
+nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-radius:20px;color:#55544e;text-decoration:none;font-size:13px;font-weight:700}
+nav.tabs a.on{background:var(--y2);color:var(--ink)}
+nav.tabs svg{width:26px;height:26px}
+.sec-title{font-weight:800;font-size:18px;margin:26px 0 8px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="brand">나만의 작업실</div><div class="conn"><span class="dot" id="dot"></span><span id="connText">확인 중</span></div></div></header>
+<main class="wrap" id="view"></main>
+<nav class="tabs"><div class="in">
+  <a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 3v18M3 12h18"/></svg>내 영상</a>
+  <a href="#create" data-tab="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>만들기</a>
+  <a href="#post" data-tab="post"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>게시·예약</a>
+  <a href="#settings" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><path d="M10 7h11"/><circle cx="17" cy="17" r="3"/><path d="M3 17h11"/></svg>설정</a>
+</div></nav>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const view = $('#view');
+const h = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const STATUS = { uploaded: '자료 올림', storyboarding: 'AI 구성 중', storyboard: '검토 대기', rendering: '영상 만드는 중', rendered: '완성', error: '확인 필요', posted: '게시 완료' };
+const SPONSOR = { none: '내돈내산 (협찬 아님)', product: '제품 무상 제공', fee: '원고료 받음', product_fee: '제품 + 원고료', custom: '업체 지정 문구 있음' };
+const MOTION = { 'zoom-in': '천천히 확대', 'zoom-out': '천천히 축소', 'pan-left': '왼→오 이동', 'pan-right': '오→왼 이동', 'pan-up': '위로 이동', 'pan-down': '아래로 이동', none: '고정' };
+let timer = null;
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+async function api(path, opt = {}) {
+  const r = await fetch(path, { ...opt, headers: opt.body && !(opt.body instanceof Blob) ? { 'Content-Type': 'application/json' } : undefined, body: opt.body && !(opt.body instanceof Blob) && typeof opt.body !== 'string' ? JSON.stringify(opt.body) : opt.body });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || `오류 ${r.status}`);
+  return j;
+}
+const fmtDate = (s) => { try { const d = new Date(s); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } catch { return ''; } };
+const statusOf = (j) => (j.posted && (j.posted.instagram || j.posted.youtube) ? 'posted' : j.status);
+
+async function ping() {
+  try { await api('/api/status'); $('#dot').className = 'dot on'; $('#connText').textContent = '편집 PC 연결됨'; }
+  catch { $('#dot').className = 'dot off'; $('#connText').textContent = '편집 PC 연결 끊김'; }
+}
+
+// ---------------- 내 영상 ----------------
+async function home() {
+  const jobs = await api('/api/jobs');
+  const busy = jobs.filter((j) => ['storyboarding', 'storyboard', 'rendering', 'uploaded'].includes(j.status)).length;
+  view.innerHTML = `
+    <div class="row"><div><div class="eyebrow">나만의 콘텐츠 작업실</div><h1>내 영상<i>.</i></h1></div>
+    <a class="btn" href="#create" style="margin-top:26px">＋ 새 영상 만들기</a></div>
+    <p class="lead">당신의 이야기, 다음 릴스가 될 준비가 됐어요.</p>
+    <div class="card hero"><div class="chip">사진도, 영상도 간편하게</div>
+      <h2>이야기는 당신이.<br><span>편집은 스튜디오가.</span></h2>
+      <p>핵심 컷부터 한국어 자막, 배경음악까지.<br>사진이나 촬영본으로 나만의 릴스를 완성하세요.</p>
+      <a class="btn dark" href="#create">새 이야기 만들기 ↗</a>
+      <small>내 PC에 안전하게 · 확인 후 게시</small></div>
+    <div class="stats"><div class="stat"><span>전체 프로젝트</span><b>${jobs.length}</b></div><div class="stat"><span>편집·검토 중</span><b>${busy}</b></div></div>
+    <div class="sec-title">최근 작업</div>
+    ${jobs.length ? jobs.map(jobCard).join('') : '<p class="muted">아직 만든 영상이 없어요. 만들기 탭에서 시작해 보세요.</p>'}`;
+  if (jobs.some((j) => ['storyboarding', 'rendering'].includes(j.status))) timer = setTimeout(route, 5000);
+}
+function jobCard(j) {
+  const st = statusOf(j);
+  return `<a class="job" href="#job/${h(j.id)}">${j.thumb ? `<img src="${h(j.thumb)}" loading="lazy" alt="">` : '<div class="ph"></div>'}
+    <div><div class="t">${h(j.title)}</div><span class="badge ${st}">${STATUS[st] || st}</span>
+    <div class="d" style="margin-top:6px">${j.mode === 'footage' ? '촬영 영상' : '사진'} · ${fmtDate(j.createdAt)}${j.duration ? ` · ${j.duration.toFixed(0)}초` : ''}</div></div></a>`;
+}
+
+// ---------------- 만들기 ----------------
+let draft = { mode: 'photo', files: [] };
+function create() {
+  view.innerHTML = `
+    <div class="eyebrow">새로운 이야기의 시작</div><h1>무엇으로 만들까요?</h1>
+    <p class="lead">사진과 주제만 있어도 충분해요.</p>
+    <div class="card">
+      <label class="f" style="margin-top:0">1. 사용할 자료</label>
+      <div class="opts">
+        <button class="opt" data-mode="footage"><div class="ic">🎞️</div><b>촬영 영상</b><span>말하는 영상·현장 클립을 편집해요.</span></button>
+        <button class="opt" data-mode="photo"><div class="ic">🖼️</div><b>사진으로 만들기</b><span>사진에 움직임과 이야기를 더해요.</span></button>
+      </div>
+      <label class="f">2. 주제·제목</label>
+      <input type="text" id="topic" maxlength="100" placeholder="예: 다이소 배수구 클리너 2주 사용 후기">
+      <label class="f">3. 협찬 여부</label>
+      <select id="sponsor"><option value="">골라 주세요</option>${Object.entries(SPONSOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+      <div id="sponsorMore" style="display:none">
+        <input type="text" id="sponsorBrand" maxlength="60" placeholder="업체명 (예: ○○리빙)" style="margin-top:10px">
+        <textarea id="sponsorText" maxlength="300" placeholder="업체가 지정한 표기 문구 (있으면 그대로 붙여넣기)" style="margin-top:10px;display:none"></textarea>
+        <div class="hint">협찬 영상은 화면 왼쪽 위에 "광고 · 제품 제공" 표기가 처음부터 끝까지 들어가요 (공정위 지침).</div>
+      </div>
+      <label class="f">요구사항 메모</label>
+      <textarea id="memo" maxlength="2000" placeholder="사진 순서·원하는 분위기를 적어 주세요.&#10;예: 냄새 때문에 고생한 얘기로 시작, 마지막에 2주 후 상태. 잔잔한 분위기."></textarea>
+      <div class="hint">가격·사용 기간·단점처럼 사실 정보는 여기에 적어 주세요. 적지 않은 사실은 영상에 넣지 않아요.</div>
+      <label class="f">4. 자료 올리기</label>
+      <label class="pick" for="fileIn">📎 사진·영상 고르기 (여러 장 가능)<input id="fileIn" type="file" multiple accept="image/jpeg,image/png,image/webp,video/*" hidden></label>
+      <div class="files" id="fileList"></div>
+      <div class="bar" id="bar" style="display:none"><i></i></div>
+      <div style="margin-top:22px"><button class="btn block" id="go">자료 올리고 시작하기 ↗</button></div>
+    </div>`;
+  const setMode = (m) => { draft.mode = m; view.querySelectorAll('.opt').forEach((o) => o.classList.toggle('on', o.dataset.mode === m)); };
+  view.querySelectorAll('.opt').forEach((o) => (o.onclick = () => setMode(o.dataset.mode)));
+  setMode(draft.mode);
+  $('#sponsor').onchange = (e) => { const v = e.target.value; $('#sponsorMore').style.display = v && v !== 'none' ? '' : 'none'; $('#sponsorText').style.display = v === 'custom' ? '' : 'none'; };
+  $('#fileIn').onchange = (e) => { draft.files = [...draft.files, ...e.target.files]; drawFiles(); };
+  drawFiles();
+  $('#go').onclick = submitCreate;
+}
+function drawFiles() {
+  $('#fileList').innerHTML = draft.files.map((f, i) => {
+    const isImg = f.type.startsWith('image/');
+    return `<div class="fi" data-i="${i}" style="${isImg ? `background-image:url(${URL.createObjectURL(f)})` : 'background:#333'}"><span>${isImg ? '' : '🎬 '}${h(f.name)}</span></div>`;
+  }).join('');
+  view.querySelectorAll('.fi').forEach((el) => (el.onclick = () => { if (confirm('이 파일을 뺄까요?')) { draft.files.splice(Number(el.dataset.i), 1); drawFiles(); } }));
+}
+function uploadFile(url, file, onProg) {
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest();
+    x.open('PUT', url);
+    x.upload.onprogress = (e) => e.lengthComputable && onProg(e.loaded);
+    x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch {} x.status < 300 ? res(j) : rej(new Error(j.error || `업로드 실패 (${x.status})`)); };
+    x.onerror = () => rej(new Error('업로드 중 연결이 끊겼어요.'));
+    x.send(file);
+  });
+}
+async function submitCreate() {
+  const topic = $('#topic').value.trim(); const sponsor = $('#sponsor').value;
+  if (!topic) return toast('주제를 적어 주세요.');
+  if (!sponsor) return toast('협찬 여부를 골라 주세요.');
+  if (sponsor !== 'none' && !$('#sponsorBrand').value.trim() && sponsor !== 'custom') return toast('협찬 업체명을 적어 주세요.');
+  if (!draft.files.length) return toast('사진이나 영상을 올려 주세요.');
+  const go = $('#go'); go.disabled = true; go.textContent = '올리는 중...';
+  const bar = $('#bar'); bar.style.display = ''; const fill = bar.firstElementChild;
+  try {
+    const job = await api('/api/jobs', { method: 'POST', body: { mode: draft.mode, topic, memo: $('#memo').value, sponsor, sponsorBrand: $('#sponsorBrand').value, sponsorText: $('#sponsorText').value } });
+    const total = draft.files.reduce((s, f) => s + f.size, 0) || 1; let done = 0;
+    for (const f of draft.files) {
+      await uploadFile(`/api/jobs/${job.id}/media?name=${encodeURIComponent(f.name)}`, f, (n) => (fill.style.width = `${((done + n) / total) * 100}%`));
+      done += f.size;
+    }
+    await api(`/api/jobs/${job.id}/storyboard`, { method: 'POST' });
+    draft = { mode: 'photo', files: [] };
+    location.hash = `#job/${job.id}`;
+  } catch (e) { toast(e.message); go.disabled = false; go.textContent = '자료 올리고 시작하기 ↗'; }
+}
+
+// ---------------- 작업 상세 ----------------
+let cur = null;
+async function jobView(id) {
+  const d = await api(`/api/jobs/${id}`);
+  cur = d;
+  const j = d.job; const st = statusOf(j); const busy = ['storyboarding', 'rendering'].includes(j.status);
+  let body = '';
+  if (busy) {
+    body += `<div class="card"><div style="display:flex;gap:12px;align-items:center"><span class="spin"></span><b>${j.status === 'storyboarding' ? 'AI가 사진·영상을 보고 스토리보드를 짜고 있어요 (1~3분)' : `영상을 만들고 있어요 — ${h(j.progress || '')}`}</b></div>
+      ${d.log ? `<pre class="rev" style="margin-top:14px;max-height:160px;font-size:12px">${h(d.log)}</pre>` : ''}
+      <button class="btn ghost small" style="margin-top:12px" id="cancel">중단</button></div>`;
+  }
+  if (j.status === 'error' && j.error) body += `<div class="card"><b>확인이 필요해요</b><div class="err" style="margin-top:10px">${h(j.error)}</div></div>`;
+  if (d.files.reel && !busy) {
+    body += `<div class="card"><video class="player" src="${d.files.reel}?t=${Date.parse(j.renderedAt || j.updatedAt || 0)}" controls playsinline poster="/f/${h(j.id)}/thumb.jpg?t=${Date.parse(j.updatedAt || 0)}"></video>
+      ${j.fast ? '<div class="hint">빠른 미리보기 화질이에요. 게시용은 "영상 만들기"를 다시 눌러 주세요.</div>' : ''}
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><a class="btn" href="${d.files.reel}?download=1">⬇ 영상 받기</a><a class="btn ghost" href="#post">게시·예약으로</a></div></div>`;
+    if (d.report) body += `<div class="card"><b>자동 검증 결과</b><pre class="rev" style="margin-top:10px">${h(d.report)}</pre>${d.files.check ? `<div class="hint" style="margin:12px 0 6px">장면별 확인 — 자막이 잘리거나 얼굴·송장이 보이지 않는지 봐 주세요.</div><img class="sheet" src="${d.files.check}?t=${Date.parse(j.updatedAt || 0)}">` : ''}</div>`;
+  }
+  if (d.storyboard && !busy) body += storyboardEditor(d);
+  else if (!busy && !d.storyboard) body += `<div class="card"><b>올린 자료 ${d.media.length}개</b><div class="files">${d.media.map((m) => `<div class="fi" style="${m.kind === 'image' ? `background-image:url(${h(m.url)})` : 'background:#333'}"><span>${h(m.name)}</span></div>`).join('')}</div>
+    <button class="btn block" style="margin-top:16px" id="ai">AI 스토리보드 짜기</button></div>`;
+  if (d.review && !busy) body += `<div class="card"><b>AI 검수 보고</b><pre class="rev" style="margin-top:10px">${h(d.review)}</pre></div>`;
+  body += `<div style="display:flex;gap:8px;margin:18px 0;flex-wrap:wrap">${d.storyboard && !busy ? '<button class="btn ghost small" id="ai">AI로 처음부터 다시 짜기</button>' : ''}${!busy ? '<button class="btn ghost small" id="del" style="color:var(--bad)">작업 삭제</button>' : ''}</div>`;
+
+  view.innerHTML = `<div class="eyebrow"><a href="#home" style="color:inherit">← 내 영상</a></div>
+    <h1 style="font-size:26px">${h(j.title)}</h1>
+    <p class="lead" style="margin-bottom:8px"><span class="badge ${st}">${STATUS[st] || st}</span> · ${j.mode === 'footage' ? '촬영 영상' : '사진'} · ${SPONSOR[j.sponsor] || (d.storyboard && d.storyboard.sponsored ? '협찬' : '협찬 정보 없음')}</p>${body}`;
+  bindJob(d);
+  if (busy) timer = setTimeout(route, 2500);
+}
+
+function storyboardEditor(d) {
+  const sb = d.storyboard;
+  const cuts = sb.cuts.map((c, i) => {
+    const isV = c.type === 'video'; const isCard = c.type === 'card';
+    const th = isCard ? `<div class="th" style="background:${h(c.background || '#111')}"><em>#${i + 1} 글자</em></div>`
+      : isV ? `<div class="th"><video src="${h(c._url)}#t=${Number(c.in || 0)}" muted playsinline preload="metadata"></video><em>#${i + 1} 영상</em></div>`
+      : `<div class="th" style="background-image:url(${h(c._url)})"><em>#${i + 1} 사진</em></div>`;
+    const timing = isV
+      ? `<input type="number" step="0.1" min="0" data-k="in" data-i="${i}" value="${c.in ?? 0}" title="시작(초)"><input type="number" step="0.1" min="0" data-k="out" data-i="${i}" value="${c.out ?? ''}" title="끝(초)">`
+      : `<input type="number" step="0.1" min="0.5" max="8" data-k="duration" data-i="${i}" value="${c.duration}" title="길이(초)">`;
+    const motion = c.type === 'image' ? `<select data-k="motion" data-i="${i}">${Object.entries(MOTION).map(([k, v]) => `<option value="${k}" ${c.motion === k ? 'selected' : ''}>${v}</option>`).join('')}</select>` : '';
+    const subsNote = Array.isArray(c.subs) && c.subs.length ? `<div class="hint">세부 자막 ${c.subs.length}개 (시간 나눔) — 아래 칸을 고치면 한 자막으로 합쳐져요.</div>` : '';
+    const text = Array.isArray(c.subs) && c.subs.length ? c.subs.map((s) => s.text).join('\n') : c.text || '';
+    const blur = (c.blur || []).length ? `<div class="hint">🔒 모자이크 ${c.blur.length}곳: ${h(c.blur.map((b) => b.reason || '개인정보').join(', '))}</div>` : '';
+    return `<div class="cut">${th}<div class="body"><div class="lab">${isV ? '시작~끝(초)' : '길이(초)'}${motion ? ' · 움직임' : ''}</div><div class="meta">${timing}${motion}</div>
+      <div class="lab">자막 (한 줄 14자 이내, 최대 2줄)</div><textarea data-k="text" data-i="${i}" ${Array.isArray(c.subs) && c.subs.length ? 'data-subs="1"' : ''}>${h(text)}</textarea>${subsNote}${blur}</div></div>`;
+  }).join('');
+  return `<div class="card"><b>스토리보드</b><span class="muted" style="font-size:13px"> · 컷 ${sb.cuts.length}개 · 예상 ${estimate(sb).toFixed(1)}초</span>
+    ${sb.sponsored ? `<div class="hint" style="margin-top:8px">📢 협찬 표기: <b>${h(sb.disclosure)}</b> (영상 전체 좌상단)</div>` : ''}
+    <label class="f">첫 화면 후킹 문구 (처음 2~3초)</label><textarea id="hookText" style="min-height:64px">${h((sb.hook && sb.hook.text) || '')}</textarea>
+    <label class="f">배경음악</label><select id="bgmSel"><option value="">없음</option></select>
+    <div class="hint">설정 탭에서 배경음악 파일(mp3)을 올릴 수 있어요. 저작권 걱정 없는 무료 음원을 쓰세요.</div>
+    <label class="f">컷 구성</label>${cuts}
+    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
+      <button class="btn ghost" id="save">저장</button>
+      <button class="btn ghost" id="fast">빠른 미리보기</button>
+      <button class="btn" id="render">영상 만들기</button></div>
+    <div class="hint">"영상 만들기"를 누르는 것이 이 스토리보드를 승인하는 거예요. 게시는 영상을 확인한 뒤 직접 해요.</div></div>`;
+}
+function estimate(sb) { return sb.cuts.reduce((s, c) => s + (c.type === 'video' ? ((Number(c.out) || 0) - (Number(c.in) || 0)) / (Number(c.speed) || 1) : Number(c.duration) || 0), 0); }
+
+function collect() {
+  const sb = JSON.parse(JSON.stringify(cur.storyboard));
+  view.querySelectorAll('[data-k]').forEach((el) => {
+    const c = sb.cuts[Number(el.dataset.i)]; const k = el.dataset.k;
+    if (k === 'text') {
+      const orig = Array.isArray(c.subs) && c.subs.length ? c.subs.map((s) => s.text).join('\n') : c.text || '';
+      if (el.value !== orig) { delete c.subs; c.text = el.value.trim(); }
+    } else if (k === 'motion') c.motion = el.value;
+    else if (el.value !== '') c[k] = Number(el.value);
+  });
+  const hk = $('#hookText').value.trim();
+  sb.hook = hk ? { ...(sb.hook || {}), text: hk, start: (sb.hook && sb.hook.start) || 0, end: (sb.hook && sb.hook.end) || 2.5 } : null;
+  const bg = $('#bgmSel').value;
+  sb.bgm = bg ? { ...(sb.bgm || {}), path: bg } : null;
+  return sb;
+}
+
+async function bindJob(d) {
+  const id = d.job.id;
+  const on = (sel, fn) => { const el = $(sel); if (el) el.onclick = fn; };
+  on('#cancel', async () => { await api(`/api/jobs/${id}/cancel`, { method: 'POST' }); toast('중단했어요.'); });
+  on('#ai', async () => {
+    if (d.storyboard && !confirm('지금 스토리보드를 버리고 AI가 새로 짤까요?')) return;
+    try { await api(`/api/jobs/${id}/storyboard`, { method: 'POST' }); route(); } catch (e) { toast(e.message); }
+  });
+  on('#del', async () => {
+    if (!confirm('이 작업(올린 자료·완성 영상 포함)을 PC에서 지울까요? 되돌릴 수 없어요.')) return;
+    await api(`/api/jobs/${id}`, { method: 'DELETE' }); location.hash = '#home';
+  });
+  const save = async () => { await api(`/api/jobs/${id}/storyboard`, { method: 'PUT', body: collect() }); };
+  on('#save', async () => { try { await save(); toast('저장했어요.'); route(); } catch (e) { toast(e.message); } });
+  const render = (fast) => async () => { try { await save(); await api(`/api/jobs/${id}/render`, { method: 'POST', body: { fast } }); route(); } catch (e) { toast(e.message); } };
+  on('#render', render(false));
+  on('#fast', render(true));
+  const sel = $('#bgmSel');
+  if (sel) {
+    const list = await api('/api/bgm').catch(() => []);
+    const curBgm = d.storyboard.bgm && d.storyboard.bgm.path;
+    if (curBgm && !list.some((b) => b.path === curBgm)) list.unshift({ name: curBgm.split('/').pop(), path: curBgm });
+    sel.innerHTML = '<option value="">없음</option>' + list.map((b) => `<option value="${h(b.path)}" ${b.path === curBgm ? 'selected' : ''}>${h(b.name)}</option>`).join('');
+  }
+}
+
+// ---------------- 게시·예약 ----------------
+const CHECKS = { disclosure: '협찬 표기·유료 광고 라벨 확인 (협찬 영상)', privacy: '아이 얼굴·송장·동호수가 안 보이는지 확인', typo: '자막 오타·잘림 확인', time: '올릴 시간대 확인 (오전 9~11시 / 밤 9~11시)' };
+async function post() {
+  const jobs = (await api('/api/jobs')).filter((j) => j.hasReel);
+  view.innerHTML = `<div class="eyebrow">완성한 영상 올리기</div><h1>게시 · 예약<i>.</i></h1>
+    <p class="lead">영상을 받아서 인스타·유튜브 앱에서 직접 올려요.<br>올릴 날짜를 적어두고, 올린 뒤 체크하세요.</p>
+    ${jobs.length ? '' : '<p class="muted">아직 완성된 영상이 없어요.</p>'}<div id="plist"></div>`;
+  const box = $('#plist');
+  for (const j of jobs) {
+    const d = await api(`/api/jobs/${j.id}`);
+    const s = j.schedule || {}; const p = j.posted || {}; const ck = j.checklist || {};
+    const el = document.createElement('div'); el.className = 'card';
+    el.innerHTML = `<div class="job" style="border:0;padding:0;margin:0"><img src="${h(j.thumb || '')}" alt=""><div><div class="t">${h(j.title)}</div><span class="badge ${statusOf(j)}">${STATUS[statusOf(j)]}</span><div class="d" style="margin-top:6px">${j.duration ? j.duration.toFixed(0) + '초' : ''}</div></div></div>
+      <label class="f">올릴 날짜·시간</label><input type="datetime-local" data-f="at" value="${h(s.at || '')}">
+      <div class="chk"><input type="checkbox" data-f="pf" value="instagram" ${(s.platforms || []).includes('instagram') ? 'checked' : ''}>인스타그램 릴스</div>
+      <div class="chk"><input type="checkbox" data-f="pf" value="youtube" ${(s.platforms || []).includes('youtube') ? 'checked' : ''}>유튜브 쇼츠</div>
+      <label class="f">올리기 전 확인</label>
+      ${Object.entries(CHECKS).filter(([k]) => k !== 'disclosure' || j.sponsor !== 'none').map(([k, v]) => `<div class="chk"><input type="checkbox" data-c="${k}" ${ck[k] ? 'checked' : ''}>${v}</div>`).join('')}
+      <label class="f">게시 문구</label><pre class="rev" style="max-height:200px">${h(d.captions || '')}</pre>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn ghost small" data-copy>문구 복사</button><a class="btn small" href="/f/${h(j.id)}/reel.mp4?download=1">⬇ 영상 받기</a></div>
+      <label class="f">올린 곳 표시</label>
+      <div class="chk"><input type="checkbox" data-p="instagram" ${p.instagram ? 'checked' : ''}>인스타그램에 올렸어요</div>
+      <div class="chk"><input type="checkbox" data-p="youtube" ${p.youtube ? 'checked' : ''}>유튜브에 올렸어요</div>`;
+    const saveP = async () => {
+      const body = {
+        schedule: { at: $('[data-f=at]', el).value, platforms: [...el.querySelectorAll('[data-f=pf]:checked')].map((x) => x.value) },
+        checklist: Object.fromEntries([...el.querySelectorAll('[data-c]')].map((x) => [x.dataset.c, x.checked])),
+        posted: Object.fromEntries([...el.querySelectorAll('[data-p]')].map((x) => [x.dataset.p, x.checked])),
+      };
+      try { await api(`/api/jobs/${j.id}`, { method: 'PATCH', body }); toast('저장했어요.'); } catch (e) { toast(e.message); }
+    };
+    el.querySelectorAll('input').forEach((i) => (i.onchange = saveP));
+    $('[data-copy]', el).onclick = async () => {
+      const text = (d.captions || '').split('■ 유튜브 쇼츠 제목')[0].replace('■ 인스타그램 릴스 문구', '').trim();
+      try { await navigator.clipboard.writeText(text); toast('인스타 문구를 복사했어요.'); }
+      catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('인스타 문구를 복사했어요.'); }
+    };
+    box.appendChild(el);
+  }
+}
+
+// ---------------- 설정 ----------------
+async function settings() {
+  view.innerHTML = `<div class="row"><div><div class="eyebrow">내 PC와 계정 관리</div><h1>연결 · 설정<i>.</i></h1></div>
+    <button class="btn ghost" id="re" style="margin-top:26px">↻ 상태 확인</button></div>
+    <p class="lead">내 PC와 도구를 준비하면 스튜디오가 완성됩니다.</p><div id="sbox"><div class="card"><span class="spin"></span></div></div>`;
+  $('#re').onclick = settings;
+  const s = await api('/api/status');
+  const row = (k, v, cls = '') => `<div class="srow"><span>${k}</span><b class="${cls}">${v}</b></div>`;
+  const gb = s.freeBytes ? `${(s.freeBytes / 1e9).toFixed(1)} GB 남음` : '알 수 없음';
+  const bgm = await api('/api/bgm').catch(() => []);
+  $('#sbox').innerHTML = `
+    <div class="card"><div class="row" style="align-items:center"><b style="font-size:24px">🖥 내 편집 PC</b><span class="ok-pill">✓ 실행 중</span></div>
+      ${row('영상 합성', s.ffmpeg ? '설치됨' : '설치 필요', s.ffmpeg ? '' : 'bad')}
+      ${row('영상 정보 확인', s.ffprobe ? '설치됨' : '설치 필요', s.ffprobe ? '' : 'bad')}
+      ${row('자막 그리기 (크롬)', s.chromium ? '설치됨' : '설치 필요', s.chromium ? '' : 'bad')}
+      ${row('Claude 구독 연결 도구', s.claude ? '설치됨' : '설치 필요', s.claude ? '' : 'bad')}
+      ${row('한글 자막 폰트', s.font ? h(s.font) : '시스템 기본', 'no')}
+      ${row('저장 공간', gb, 'no')}
+      ${!s.ffmpeg || !s.chromium ? '<div class="hint">PC 폴더에서 setup 파일을 다시 실행하면 설치돼요.</div>' : ''}
+      ${!s.claude ? '<div class="hint">Claude Code가 없으면 AI 스토리보드를 못 짜요. setup 파일을 다시 실행하고 Claude에 로그인하세요.</div>' : ''}</div>
+    <div class="card"><b style="font-size:20px">🎵 배경음악</b><div class="hint">저작권 걱정 없는 음원만 쓰세요 (유튜브 오디오 보관함 등). PC의 input/bgm 폴더에 저장돼요.</div>
+      ${bgm.map((b) => `<div class="srow" style="font-size:15px"><span>${h(b.name)}</span><audio src="${h(b.url)}" controls preload="none" style="height:32px;max-width:55%"></audio></div>`).join('') || '<p class="muted">아직 없어요.</p>'}
+      <label class="pick" for="bgmIn" style="margin-top:12px">＋ 음악 파일 올리기 (mp3·m4a)<input id="bgmIn" type="file" accept="audio/*" hidden></label></div>
+    <div class="card"><b style="font-size:20px">📱 핸드폰으로 접속</b><div class="hint">PC와 같은 와이파이에서 아래 주소를 핸드폰 브라우저로 여세요. (주소를 남에게 보내지 마세요)</div>
+      ${s.urls.map((u) => `<div class="srow" style="font-size:13px;word-break:break-all">${h(u)}</div>`).join('') || '<p class="muted">네트워크 주소를 찾지 못했어요.</p>'}</div>
+    <div class="card"><b style="font-size:20px">🔒 원칙</b><div class="hint" style="font-size:14px;line-height:1.7">· 모든 자료와 영상은 내 PC(drafts/reels)에만 저장돼요.<br>· AI는 Claude 구독으로만 동작해요 (API 키 없음).<br>· 게시는 자동으로 하지 않아요. 직접 확인하고 올려요.<br>· 아이 얼굴·송장·동호수는 AI가 찾아서 모자이크해요. 그래도 꼭 눈으로 확인하세요.</div></div>`;
+  $('#bgmIn').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try { await uploadFile(`/api/bgm?name=${encodeURIComponent(f.name)}`, f, () => {}); toast('올렸어요.'); settings(); } catch (err) { toast(err.message); }
+  };
+}
+
+// ---------------- 라우팅 ----------------
+async function route() {
+  clearTimeout(timer);
+  const [name, arg] = (location.hash.slice(1) || 'home').split('/');
+  document.querySelectorAll('nav.tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === (name === 'job' ? 'home' : name)));
+  try {
+    if (name === 'create') create();
+    else if (name === 'post') await post();
+    else if (name === 'settings') await settings();
+    else if (name === 'job' && arg) await jobView(decodeURIComponent(arg));
+    else await home();
+  } catch (e) { view.innerHTML = `<div class="card"><div class="err">${h(e.message)}</div></div>`; }
+}
+window.addEventListener('hashchange', () => { window.scrollTo(0, 0); route(); });
+ping(); setInterval(ping, 15000);
+route();
+</script>
+</body>
+</html>
