@@ -166,7 +166,7 @@ function jobCard(j) {
 }
 
 // ---------------- 만들기 ----------------
-let draft = { mode: 'photo', template: 'salim', files: [] };
+let draft = { mode: 'photo', template: 'salim', target: 30, voice: false, files: [] };
 function create() {
   view.innerHTML = `
     <div class="eyebrow">새로운 이야기의 시작</div><h1>무엇으로 만들까요?</h1>
@@ -181,6 +181,9 @@ function create() {
       </div>
       <label class="f">3. 주제·제목</label>
       <input type="text" id="topic" maxlength="100" placeholder="예: 다이소 배수구 클리너 2주 사용 후기">
+      <label class="f">길이</label>
+      <div class="opts" style="grid-template-columns:repeat(3,1fr)">${[15, 30, 60].map((t) => `<button class="opt len" data-len="${t}" style="padding:12px;text-align:center"><b style="margin:0;font-size:17px">${t}초</b></button>`).join('')}</div>
+      <div class="chk" style="margin-top:12px"><input type="checkbox" id="voiceOn"><span>🎙 AI 나레이션 넣기 <span class="muted" id="voiceHint" style="font-size:13px"></span></span></div>
       <label class="f">4. 협찬 여부</label>
       <select id="sponsor"><option value="">골라 주세요</option>${Object.entries(SPONSOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
       <div id="sponsorMore" style="display:none">
@@ -207,6 +210,12 @@ function create() {
     if (t === 'sermon' && !$('#sponsor').value) { $('#sponsor').value = 'none'; $('#sponsor').onchange({ target: $('#sponsor') }); }
   };
   view.querySelectorAll('.tpl').forEach((o) => (o.onclick = () => setTpl(o.dataset.tpl)));
+  const setLen = (t) => { draft.target = t; view.querySelectorAll('.len').forEach((o) => o.classList.toggle('on', Number(o.dataset.len) === t)); };
+  view.querySelectorAll('.len').forEach((o) => (o.onclick = () => setLen(Number(o.dataset.len))));
+  setLen(draft.target);
+  $('#voiceOn').checked = draft.voice;
+  $('#voiceOn').onchange = (e) => (draft.voice = e.target.checked);
+  api('/api/voice').then((v) => { $('#voiceHint').textContent = v.ready ? `(${v.provider === 'mock' ? '테스트 음성' : 'Fish Audio'} 연결됨)` : '(설정 탭에서 Fish Audio 연결 필요)'; }).catch(() => {});
   $('#sponsor').onchange = (e) => { const v = e.target.value; $('#sponsorMore').style.display = v && v !== 'none' ? '' : 'none'; $('#sponsorText').style.display = v === 'custom' ? '' : 'none'; };
   setTpl(draft.template);
   $('#fileIn').onchange = (e) => { draft.files = [...draft.files, ...e.target.files]; drawFiles(); };
@@ -239,14 +248,14 @@ async function submitCreate() {
   const go = $('#go'); go.disabled = true; go.textContent = '올리는 중...';
   const bar = $('#bar'); bar.style.display = ''; const fill = bar.firstElementChild;
   try {
-    const job = await api('/api/jobs', { method: 'POST', body: { mode: draft.mode, template: draft.template, topic, memo: $('#memo').value, sponsor, sponsorBrand: $('#sponsorBrand').value, sponsorText: $('#sponsorText').value } });
+    const job = await api('/api/jobs', { method: 'POST', body: { mode: draft.mode, template: draft.template, targetDuration: draft.target, voice: draft.voice, topic, memo: $('#memo').value, sponsor, sponsorBrand: $('#sponsorBrand').value, sponsorText: $('#sponsorText').value } });
     const total = draft.files.reduce((s, f) => s + f.size, 0) || 1; let done = 0;
     for (const f of draft.files) {
       await uploadFile(`/api/jobs/${job.id}/media?name=${encodeURIComponent(f.name)}`, f, (n) => (fill.style.width = `${((done + n) / total) * 100}%`));
       done += f.size;
     }
     await api(`/api/jobs/${job.id}/storyboard`, { method: 'POST' });
-    draft = { mode: 'photo', template: 'salim', files: [] };
+    draft = { mode: 'photo', template: 'salim', target: 30, voice: false, files: [] };
     location.hash = `#job/${job.id}`;
   } catch (e) { toast(e.message); go.disabled = false; go.textContent = '자료 올리고 시작하기 ↗'; }
 }
@@ -300,13 +309,16 @@ function storyboardEditor(d) {
     const text = Array.isArray(c.subs) && c.subs.length ? c.subs.map((s) => s.text).join('\n') : c.text || '';
     const blur = (c.blur || []).length ? `<div class="hint">🔒 모자이크 ${c.blur.length}곳: ${h(c.blur.map((b) => b.reason || '개인정보').join(', '))}</div>` : '';
     return `<div class="cut">${th}<div class="body"><div class="lab">${isV ? '시작~끝(초)' : '길이(초)'}${motion ? ' · 움직임' : ''}</div><div class="meta">${timing}${motion}${look}</div>
-      <div class="lab">자막 (한 줄 14자 이내, 최대 2줄)</div><textarea data-k="text" data-i="${i}" ${Array.isArray(c.subs) && c.subs.length ? 'data-subs="1"' : ''}>${h(text)}</textarea>${c.ref ? `<div class="hint">📖 출처: ${h(c.ref)}</div>` : ''}${subsNote}${blur}</div></div>`;
+      <div class="lab">🎙 나레이션 (읽어줄 문장 · 비우면 없음)</div><textarea data-k="narration" data-i="${i}" style="min-height:48px" placeholder="예: 아침 5분이 하루를 바꾼다는 말, 들어보셨나요?">${h(c.narration || '')}</textarea>
+      <div class="lab">자막 (한 줄 14자 이내, 최대 2줄 · 비우면 나레이션으로 자동 자막)</div><textarea data-k="text" data-i="${i}" ${Array.isArray(c.subs) && c.subs.length ? 'data-subs="1"' : ''}>${h(text)}</textarea>${c.ref ? `<div class="hint">📖 출처: ${h(c.ref)}</div>` : ''}${subsNote}${blur}</div></div>`;
   }).join('');
   return `<div class="card"><b>스토리보드</b><span class="muted" style="font-size:13px"> · 컷 ${sb.cuts.length}개 · 예상 ${estimate(sb).toFixed(1)}초</span>
     ${sb.sponsored ? `<div class="hint" style="margin-top:8px">📢 협찬 표기: <b>${h(sb.disclosure)}</b> (영상 전체 좌상단)</div>` : ''}
     ${styleControls(sb)}
     <label class="f">첫 화면 후킹 문구 (처음 2~3초)</label><textarea id="hookText" style="min-height:64px">${h((sb.hook && sb.hook.text) || '')}</textarea>
     <label class="f">배경음악</label><select id="bgmSel"><option value="">없음</option></select>
+    <div class="hint" style="display:flex;align-items:center;gap:10px;margin-top:10px">음량 <input type="range" id="bgmVol" min="5" max="100" value="${Math.round(((sb.bgm && sb.bgm.volume) ?? 0.35) * 100)}" style="flex:1"> <span id="bgmVolT">${Math.round(((sb.bgm && sb.bgm.volume) ?? 0.35) * 100)}%</span></div>
+    <div class="hint">곡이 영상보다 짧으면 이음새 없이 자연스럽게 이어 붙여요 (30초·60초 OK). 말소리·나레이션이 나올 땐 자동으로 작아져요.</div>
     <div class="hint">설정 탭에서 배경음악 파일(mp3)을 올릴 수 있어요. 저작권 걱정 없는 무료 음원을 쓰세요.</div>
     <label class="f">컷 구성</label>${cuts}
     <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap">
@@ -323,6 +335,10 @@ function styleControls(sb) {
     <label class="f">🔤 자막 스타일</label>${sel('stText', STYLES.textStyles, sb.textStyle, tpl.textStyle)}
     <label class="f">✨ 자막 효과</label>${sel('stAnim', STYLES.textAnims, sb.textAnim, tpl.textAnim)}
     <label class="f">🪝 후킹 스타일</label>${sel('stHook', STYLES.hookStyles, sb.hookStyle, tpl.hookStyle)}
+    <label class="f">🖍 강조색</label><div style="display:flex;gap:10px;align-items:center"><input type="color" id="stAccent" value="${h(sb.accent || STYLES.templateAccents[sb.template] || '#FFD84D')}" style="width:64px;height:44px;border:0;background:none"><button class="btn ghost small" id="accReset" type="button">분야 기본색</button></div>
+    <label class="f">🎞 화면 테두리</label><select id="stFrame">${Object.entries(STYLES.frames).map(([k, v]) => `<option value="${k}" ${(sb.frame || 'none') === k ? 'selected' : ''}>${h(v)}</option>`).join('')}</select>
+    <div class="chk" style="margin-top:14px"><input type="checkbox" id="stVoice" ${sb.voice === false ? '' : 'checked'}><span>🎙 나레이션 사용 (컷별 나레이션 문장을 AI 목소리로)</span></div>
+    ${sb.targetDuration ? `<div class="hint">목표 길이 ${sb.targetDuration}초 · 지금 예상 ${estimate(sb).toFixed(1)}초 (나레이션이 길면 사진 컷이 자동으로 늘어나요)</div>` : ''}
     <label class="f">📌 상단 고정 제목 (정보 릴스용, 비우면 없음)</label><input type="text" id="stTitle" maxlength="40" value="${h((sb.titleBar && sb.titleBar.text) || '')}" placeholder="예: 배수구 냄새 없애는 법 *3가지*">
     <div class="hint">자막에서 <b>*단어*</b>처럼 별표로 감싸면 강조 색으로 나와요.</div>`;
 }
@@ -337,16 +353,22 @@ function collect() {
       if (el.value !== orig) { delete c.subs; c.text = el.value.trim(); }
     } else if (k === 'motion') c.motion = el.value;
     else if (k === 'look') { if (el.value) c.look = el.value; else delete c.look; }
+    else if (k === 'narration') { const v = el.value.trim(); if (v) c.narration = v; else delete c.narration; }
     else if (el.value !== '') c[k] = Number(el.value);
   });
   const hk = $('#hookText').value.trim();
   sb.hook = hk ? { ...(sb.hook || {}), text: hk, start: (sb.hook && sb.hook.start) || 0, end: (sb.hook && sb.hook.end) || 2.5 } : null;
   const pick = (id, key) => { const v = $(id).value; if (v) sb[key] = v; else delete sb[key]; };
   pick('#stLook', 'look'); pick('#stText', 'textStyle'); pick('#stAnim', 'textAnim'); pick('#stHook', 'hookStyle');
+  const ac = $('#stAccent').value;
+  if (ac && ac.toLowerCase() !== String(STYLES.templateAccents[sb.template] || '').toLowerCase()) sb.accent = ac; else delete sb.accent;
+  if ($('#stAccent').dataset.reset) delete sb.accent;
+  if ($('#stFrame').value !== 'none') sb.frame = $('#stFrame').value; else delete sb.frame;
+  if ($('#stVoice').checked) delete sb.voice; else sb.voice = false;
   const tt = $('#stTitle').value.trim();
   if (tt) sb.titleBar = { ...(sb.titleBar || {}), text: tt }; else delete sb.titleBar;
   const bg = $('#bgmSel').value;
-  sb.bgm = bg ? { ...(sb.bgm || {}), path: bg } : null;
+  sb.bgm = bg ? { ...(sb.bgm || {}), path: bg, volume: Number($('#bgmVol').value) / 100 } : null;
   return sb;
 }
 
@@ -367,6 +389,8 @@ async function bindJob(d) {
   const render = (fast) => async () => { try { await save(); await api(`/api/jobs/${id}/render`, { method: 'POST', body: { fast } }); route(); } catch (e) { toast(e.message); } };
   on('#render', render(false));
   on('#fast', render(true));
+  const vol = $('#bgmVol'); if (vol) vol.oninput = () => ($('#bgmVolT').textContent = `${vol.value}%`);
+  on('#accReset', () => { const a = $('#stAccent'); a.value = STYLES.templateAccents[d.storyboard.template] || '#FFD84D'; a.dataset.reset = '1'; });
   const sel = $('#bgmSel');
   if (sel) {
     const list = await api('/api/bgm').catch(() => []);
@@ -433,16 +457,38 @@ async function settings() {
       ${row('영상 정보 확인', s.ffprobe ? '설치됨' : '설치 필요', s.ffprobe ? '' : 'bad')}
       ${row('자막 그리기 (크롬)', s.chromium ? '설치됨' : '설치 필요', s.chromium ? '' : 'bad')}
       ${row('Claude 구독 연결 도구', s.claude ? '설치됨' : '설치 필요', s.claude ? '' : 'bad')}
-      ${row('한글 자막 폰트', s.font ? h(s.font) : '시스템 기본', 'no')}
+      ${row('한국어 나레이션', s.voice.ready ? (s.voice.provider === 'mock' ? '테스트 음성' : 'Fish Audio 연결됨') : '설정 필요', s.voice.ready ? '' : 'no')}
+      ${row('자막 폰트', s.fonts.pretendard ? `Pretendard${s.fonts.gowun ? '·고운바탕' : ''}${s.fonts.user.length ? ' + 내 폰트' : ''}` : '시스템 기본', s.fonts.pretendard ? '' : 'no')}
       ${row('저장 공간', gb, 'no')}
       ${!s.ffmpeg || !s.chromium ? '<div class="hint">PC 폴더에서 setup 파일을 다시 실행하면 설치돼요.</div>' : ''}
       ${!s.claude ? '<div class="hint">Claude Code가 없으면 AI 스토리보드를 못 짜요. setup 파일을 다시 실행하고 Claude에 로그인하세요.</div>' : ''}</div>
-    <div class="card"><b style="font-size:20px">🎵 배경음악</b><div class="hint">저작권 걱정 없는 음원만 쓰세요 (유튜브 오디오 보관함 등). PC의 input/bgm 폴더에 저장돼요.</div>
+    <div class="card"><b style="font-size:20px">🎙 나레이션 (Fish Audio)</b>
+      <div class="hint">fish.audio 가입 → API Keys에서 키 발급, 원하는 목소리 페이지 주소의 ID(영문·숫자)를 복사해 넣으세요. 키는 이 PC에만 저장돼요 (data/voice.local.json).
+      글자 수만큼 Fish Audio 크레딧이 쓰이고, 같은 문장은 다시 만들지 않아요.</div>
+      <label class="f">사용</label><select id="vProv"><option value="fish">Fish Audio</option><option value="mock">테스트 음성 (요금 없음 · 삐 소리)</option></select>
+      <label class="f">API 키 ${s.voice.keySet ? `<span class="muted" style="font-size:13px">(저장됨: ${h(s.voice.keyHint)})</span>` : ''}</label><input type="text" id="vKey" autocomplete="off" placeholder="${s.voice.keySet ? '바꿀 때만 입력' : 'Fish Audio API 키'}" style="-webkit-text-security:disc">
+      <label class="f">목소리 ID</label><input type="text" id="vId" value="${h(s.voice.voiceId)}" placeholder="예: fish.audio/m/<이 부분>">
+      <label class="f">모델 · 속도</label><div style="display:flex;gap:8px"><select id="vModel"></select><input type="number" id="vSpeed" min="0.5" max="2" step="0.05" value="${s.voice.speed}" style="max-width:110px"></div>
+      <div class="hint">목소리 복제는 <b>본인 목소리</b>나 사용 허락받은 목소리만 쓰세요 (연예인·타인 목소리 금지).</div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><button class="btn ghost" id="vSave">저장</button><button class="btn" id="vTest">▶ 목소리 들어보기</button></div>
+      <audio id="vAudio" controls style="width:100%;margin-top:12px;display:none"></audio></div>
+    <div class="card"><b style="font-size:20px">🎵 배경음악</b><div class="hint">저작권 걱정 없는 음원만 쓰세요 (유튜브 오디오 보관함, Pixabay Music 등). 파일 이름에 분위기를 넣으면 AI가 골라요 (예: 잔잔-피아노.mp3, 경쾌-팝.mp3). 인스타는 앱에서 인기 음악을 붙이면 노출에 유리해요.</div>
       ${bgm.map((b) => `<div class="srow" style="font-size:15px"><span>${h(b.name)}</span><audio src="${h(b.url)}" controls preload="none" style="height:32px;max-width:55%"></audio></div>`).join('') || '<p class="muted">아직 없어요.</p>'}
       <label class="pick" for="bgmIn" style="margin-top:12px">＋ 음악 파일 올리기 (mp3·m4a)<input id="bgmIn" type="file" accept="audio/*" hidden></label></div>
     <div class="card"><b style="font-size:20px">📱 핸드폰으로 접속</b><div class="hint">PC와 같은 와이파이에서 아래 주소를 핸드폰 브라우저로 여세요. (주소를 남에게 보내지 마세요)</div>
       ${s.urls.map((u) => `<div class="srow" style="font-size:13px;word-break:break-all">${h(u)}</div>`).join('') || '<p class="muted">네트워크 주소를 찾지 못했어요.</p>'}</div>
     <div class="card"><b style="font-size:20px">🔒 원칙</b><div class="hint" style="font-size:14px;line-height:1.7">· 모든 자료와 영상은 내 PC(drafts/reels)에만 저장돼요.<br>· AI는 Claude 구독으로만 동작해요 (API 키 없음).<br>· 게시는 자동으로 하지 않아요. 직접 확인하고 올려요.<br>· 아이 얼굴·송장·동호수는 AI가 찾아서 모자이크해요. 그래도 꼭 눈으로 확인하세요.</div></div>`;
+  const vinfo = await api('/api/voice');
+  $('#vProv').value = vinfo.provider;
+  $('#vModel').innerHTML = Object.entries(vinfo.models).map(([k, v]) => `<option value="${k}" ${vinfo.model === k ? 'selected' : ''}>${h(v)}</option>`).join('');
+  const vSave = async () => api('/api/voice', { method: 'PUT', body: { provider: $('#vProv').value, apiKey: $('#vKey').value, voiceId: $('#vId').value, model: $('#vModel').value, speed: $('#vSpeed').value } });
+  $('#vSave').onclick = async () => { try { await vSave(); toast('저장했어요.'); settings(); } catch (e) { toast(e.message); } };
+  $('#vTest').onclick = async () => {
+    const b = $('#vTest'); b.disabled = true; b.textContent = '만드는 중...';
+    try { await vSave(); const r = await api('/api/voice/test', { method: 'POST', body: {} }); const a = $('#vAudio'); a.src = `${r.url}?t=${Date.now()}`; a.style.display = ''; a.play().catch(() => {}); }
+    catch (e) { toast(e.message); }
+    b.disabled = false; b.textContent = '▶ 목소리 들어보기';
+  };
   $('#bgmIn').onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;
     try { await uploadFile(`/api/bgm?name=${encodeURIComponent(f.name)}`, f, () => {}); toast('올렸어요.'); settings(); } catch (err) { toast(err.message); }

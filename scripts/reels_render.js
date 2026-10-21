@@ -7,6 +7,7 @@ const path = require('path');
 const sharp = require('sharp');
 const R = require('./lib/reels');
 const S = require('./lib/reels_style');
+const V = require('./lib/reels_voice');
 
 const { W, H, FPS, abs, rel } = R;
 const args = process.argv.slice(2);
@@ -57,6 +58,11 @@ function validate(sb) {
   if (sb.look && !S.LOOKS[sb.look]) errors.push(`look(필터)은 ${Object.keys(S.LOOKS).join('/')} 중 하나`);
   if (sb.textStyle && !S.TEXT_STYLES[sb.textStyle]) errors.push(`textStyle은 ${Object.keys(S.TEXT_STYLES).join('/')} 중 하나`);
   if (sb.textAnim && !S.TEXT_ANIMS[sb.textAnim]) errors.push(`textAnim은 ${Object.keys(S.TEXT_ANIMS).join('/')} 중 하나`);
+  if (sb.frame && !S.FRAMES[sb.frame]) errors.push(`frame은 ${Object.keys(S.FRAMES).join('/')} 중 하나`);
+  if (sb.accent && !/^#[0-9a-f]{6}$/i.test(sb.accent)) errors.push('accent(강조색)는 #RRGGBB 형식');
+  if (sb.voice !== false && (sb.cuts || []).some((c) => c.narration) && !V.ready()) {
+    errors.push('나레이션 문장이 있는데 목소리 설정이 없어요 → 스튜디오 설정 탭에서 Fish Audio 키·목소리 ID 입력 (또는 "voice": false)');
+  }
   if (sb.hookStyle && !S.HOOK_STYLES[sb.hookStyle]) errors.push(`hookStyle은 ${Object.keys(S.HOOK_STYLES).join('/')} 중 하나`);
   const stars = [sb.hook && sb.hook.text, ...(sb.cuts || []).flatMap(textsOf)].filter((t) => t && (String(t).match(/\*/g) || []).length % 2);
   for (const t of stars) warns.push(`강조 표시 *짝이 안 맞음: "${t}"`);
@@ -266,17 +272,17 @@ function overlayItems(sb, cuts, total) {
   if (sb.sponsored) raw.push({ kind: 'label', text: sb.disclosure, start: 0, end: total, anim: 'none' });
   const hookEnd = sb.hook && sb.hook.text ? Math.min(total, Number(sb.hook.end || 2.5)) : 0;
   if (hookEnd) {
-    raw.push({ kind: 'hook', hookStyle: g.hookStyle, text: sb.hook.text, start: Number(sb.hook.start || 0), end: hookEnd, anim: g.textAnim === 'none' ? 'none' : 'slide' });
+    raw.push({ kind: 'hook', hookStyle: g.hookStyle, accent: g.accent, text: sb.hook.text, start: Number(sb.hook.start || 0), end: hookEnd, anim: g.textAnim === 'none' ? 'none' : 'slide' });
   }
   if (sb.titleBar && sb.titleBar.text) {
     const st = sb.titleBar.start !== undefined ? Number(sb.titleBar.start) : hookEnd;
     const en = sb.titleBar.end !== undefined ? Number(sb.titleBar.end) : total;
-    raw.push({ kind: 'title', text: sb.titleBar.text, start: st, end: Math.min(total, en), anim: 'fade' });
+    raw.push({ kind: 'title', accent: g.accent, text: sb.titleBar.text, start: st, end: Math.min(total, en), anim: 'fade' });
   }
   for (const c of cuts) {
     const st = S.resolveStyle(sb, c);
     const kind = c.type === 'card' ? 'card' : 'sub';
-    const base = { kind, style: st.textStyle, anim: st.textAnim };
+    const base = { kind, style: st.textStyle, anim: st.textAnim, accent: st.accent };
     const cutEnd = c.start + c.dur;
     if (Array.isArray(c.subs) && c.subs.length) {
       for (const x of c.subs) {
@@ -361,10 +367,46 @@ function captionsText(sb) {
   R.ensureDir(build);
   const t0 = Date.now();
 
+  // 0) 나레이션: 컷별 음성 생성(캐시) → 사진·카드 컷은 음성 길이만큼 자동으로 늘리고, 자막이 없으면 음성 문장으로 자막을 만든다
+  const narrs = [];
+  let narrChars = 0;
+  let narrNew = 0;
+  if (sb.voice !== false && sb.cuts.some((c) => c.narration)) {
+    setJob({ progress: '나레이션 목소리 만드는 중' });
+    const voiceDir = path.join(outDir, 'voice');
+    const override = typeof sb.voice === 'object' && sb.voice ? sb.voice : {};
+    const DELAY = 0.15;
+    for (let i = 0; i < sb.cuts.length; i++) {
+      const c = sb.cuts[i];
+      if (!c.narration || !String(c.narration).trim()) continue;
+      process.stdout.write(`나레이션 ${i + 1}... `);
+      const v = await V.synthesize(c.narration, voiceDir, R, override);
+      console.log(`${v.duration.toFixed(1)}초${v.cached ? ' (캐시)' : ''}`);
+      narrChars += v.chars;
+      if (!v.cached) narrNew += v.chars;
+      const need = Math.round((v.duration + DELAY + 0.35) * 10) / 10;
+      if (c.type !== 'video' && !(c.duration >= need)) {
+        warns.push(`컷#${i + 1}: 나레이션 ${v.duration.toFixed(1)}초에 맞춰 ${c.duration || 0}초 → ${need}초로 늘림`);
+        c.duration = need;
+      }
+      if (!c.text && !(Array.isArray(c.subs) && c.subs.length) && sb.narrationSubtitles !== false) {
+        c.subs = V.chunkSubtitles(c.narration, DELAY, v.duration);
+      }
+      narrs.push({ cut: i, file: v.file, duration: v.duration, delay: DELAY });
+    }
+  }
+
   const cuts = planCuts(sb);
+  for (const n of narrs) {
+    const c = cuts[n.cut];
+    n.start = r2(c.start + n.delay);
+    if (n.duration + n.delay > c.dur + 0.05) warns.push(`컷#${n.cut + 1}: 나레이션(${n.duration.toFixed(1)}초)이 영상 컷(${c.dur.toFixed(1)}초)보다 길어 다음 컷까지 이어짐 — 구간을 늘리거나 문장을 줄이세요`);
+  }
   const total = r2(cuts.reduce((s, c) => s + c.dur, 0));
   if (total < 5) warns.push(`전체 ${total}초 — 너무 짧음 (권장 7~30초)`);
-  if (total > 60) warns.push(`전체 ${total}초 — 길면 완주율이 떨어짐 (권장 7~30초, 최대 60초)`);
+  if (total > 90) warns.push(`전체 ${total}초 — 길면 완주율이 떨어짐 (권장 15~60초)`);
+  const target = Number(sb.targetDuration || 0);
+  if (target && Math.abs(total - target) > target * 0.2) warns.push(`목표 길이 ${target}초인데 실제 ${total}초 — 컷 길이를 조정하세요`);
   if (sb.hook && Number(sb.hook.end || 2.5) > 3.5) warns.push('후킹 제목은 처음 3초 안에 끝나는 게 좋음');
 
   // 1) 컷별 세그먼트
@@ -408,6 +450,11 @@ function captionsText(sb) {
   }
   const fc = [];
   let v = '0:v';
+  if (gst.frame === 'letterbox') {
+    const bar = Math.round(H * 0.095);
+    fc.push(`[0:v]drawbox=x=0:y=0:w=iw:h=${bar}:color=black:t=fill,drawbox=x=0:y=ih-${bar}:w=iw:h=${bar}:color=black:t=fill[lb]`);
+    v = 'lb';
+  }
   ovs.forEach((o, i) => {
     const nv = `v${i}`;
     if (o.anim === 'none') {
@@ -428,22 +475,64 @@ function captionsText(sb) {
   const fadeOut = Math.max(0, total - 0.35);
   fc.push(`[${v}]fade=t=out:st=${fadeOut}:d=0.35,format=yuv420p[vout]`);
 
+  // 목소리 트랙 = 원본 소리 + 나레이션(각 컷 시작 시점으로 지연)
+  let nextIn = ovs.length + 1;
+  let voice = '0:a';
+  if (narrs.length) {
+    const labels = [];
+    for (const n of narrs) {
+      inputs.push('-i', n.file);
+      const ms = Math.round(n.start * 1000);
+      fc.push(`[${nextIn}:a]aresample=48000,aformat=channel_layouts=stereo,adelay=${ms}|${ms},volume=${Number(sb.narrationVolume ?? 1.0)}[n${nextIn}]`);
+      labels.push(`[n${nextIn}]`);
+      nextIn++;
+    }
+    fc.push(`[0:a]${labels.join('')}amix=inputs=${labels.length + 1}:duration=first:normalize=0[vox]`);
+    voice = 'vox';
+    anyAudio = true;
+  }
+
+  // 배경음악: 짧은 곡은 이음새 없이 크로스페이드로 이어 붙여 30초·60초도 자연스럽게
   const bgm = sb.bgm && sb.bgm.path ? sb.bgm : null;
+  let bgmNote = '없음';
   if (bgm) {
-    const bi = ovs.length + 1;
-    inputs.push('-stream_loop', '-1', '-i', abs(bgm.path));
-    const vol = Number(bgm.volume ?? (anyAudio ? 0.35 : 0.8));
     const st = Number(bgm.start || 0);
-    fc.push(`[${bi}:a]atrim=start=${st}:duration=${total},asetpts=PTS-STARTPTS,aresample=48000,aformat=channel_layouts=stereo,volume=${vol},afade=t=in:d=0.3,afade=t=out:st=${Math.max(0, total - 1.5)}:d=1.5[bgm]`);
+    const bdur = R.probe(bgm.path).duration;
+    const XF = 2;
+    let bl;
+    const need = total + 0.5;
+    if (bdur - st >= need) {
+      inputs.push('-i', abs(bgm.path));
+      fc.push(`[${nextIn}:a]atrim=start=${st}:duration=${total},asetpts=PTS-STARTPTS[bsrc]`);
+      bl = 'bsrc';
+      bgmNote = `${path.basename(bgm.path)} (${st}초부터)`;
+    } else if (bdur > XF * 3 && bdur - st > XF * 2) {
+      const copies = Math.min(12, 1 + Math.ceil((need - (bdur - st)) / (bdur - XF)));
+      for (let k = 0; k < copies; k++) inputs.push('-i', abs(bgm.path));
+      fc.push(`[${nextIn}:a]atrim=start=${st},asetpts=PTS-STARTPTS[bc0]`);
+      for (let k = 1; k < copies; k++) {
+        fc.push(`[${k === 1 ? 'bc0' : `bx${k - 1}`}][${nextIn + k}:a]acrossfade=d=${XF}:c1=tri:c2=tri[bx${k}]`);
+      }
+      fc.push(`[bx${copies - 1}]atrim=duration=${total},asetpts=PTS-STARTPTS[bsrc]`);
+      bl = 'bsrc';
+      bgmNote = `${path.basename(bgm.path)} (${bdur.toFixed(0)}초 곡을 ${copies}번 크로스페이드로 이어 붙임)`;
+    } else {
+      inputs.push('-stream_loop', '-1', '-i', abs(bgm.path));
+      fc.push(`[${nextIn}:a]atrim=start=${st}:duration=${total},asetpts=PTS-STARTPTS[bsrc]`);
+      bl = 'bsrc';
+      bgmNote = `${path.basename(bgm.path)} (반복)`;
+    }
+    const vol = Number(bgm.volume ?? (anyAudio ? 0.35 : 0.8));
+    fc.push(`[${bl}]aresample=48000,aformat=channel_layouts=stereo,volume=${vol},afade=t=in:d=0.4,afade=t=out:st=${Math.max(0, total - 2)}:d=2[bgm]`);
     if (anyAudio) {
-      fc.push('[0:a]asplit[orig][side]');
+      fc.push(`[${voice}]asplit[orig][side]`);
       fc.push('[bgm][side]sidechaincompress=threshold=0.02:ratio=8:attack=15:release=400[duck]');
       fc.push('[orig][duck]amix=inputs=2:duration=first:normalize=0[mix]');
     } else {
-      fc.push('[0:a][bgm]amix=inputs=2:duration=first:normalize=0[mix]');
+      fc.push(`[${voice}][bgm]amix=inputs=2:duration=first:normalize=0[mix]`);
     }
   } else {
-    fc.push('[0:a]anull[mix]');
+    fc.push(`[${voice}]anull[mix]`);
   }
   fc.push('[mix]loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000[aout]');
 
@@ -462,6 +551,7 @@ function captionsText(sb) {
   ok(out.width === W && out.height === H, `해상도 ${out.width}x${out.height} (기대 ${W}x${H})`);
   ok(Math.abs(out.duration - total) < 0.3, `길이 ${out.duration.toFixed(2)}초 (기대 ${total.toFixed(2)}초)`);
   ok(out.hasAudio, '오디오 트랙 있음');
+  if (narrs.length) ok(narrs.every((n) => n.start + n.duration <= total + 0.05), `나레이션 ${narrs.length}개가 영상 길이 안에 들어감`);
   ok(ovs.length === items.length, `자막 ${ovs.length}/${items.length}개 렌더링`);
   if (sb.sponsored) ok(ovs.some((o) => o.kind === 'label'), `협찬 표기 "${sb.disclosure}" 화면 전체 구간 표시`);
 
@@ -481,7 +571,8 @@ function captionsText(sb) {
 
   const report = [
     `릴스 렌더링 결과 (${new Date().toLocaleString('ko-KR')}, ${((Date.now() - t0) / 1000).toFixed(0)}초 소요${FAST ? ', 빠른 미리보기 화질' : ''})`,
-    `영상: ${rel(reel)} · ${total.toFixed(1)}초 · 컷 ${cuts.length}개 · 자막 ${items.length}개 · 배경음악 ${bgm ? path.basename(bgm.path) : '없음'}`,
+    `영상: ${rel(reel)} · ${total.toFixed(1)}초 · 컷 ${cuts.length}개 · 자막 ${items.length}개 · 배경음악 ${bgmNote}`,
+    narrs.length ? `나레이션: ${narrs.length}컷 · ${narrChars}자 (새로 생성 ${narrNew}자${narrNew ? (V.loadConfig().provider === 'fish' ? ' — Fish Audio 크레딧 사용' : ' — 테스트 음성') : ', 전부 캐시'})` : '나레이션: 없음',
     `스타일: ${S.TEMPLATES[gst.template].label} · 필터 ${S.LOOKS[gst.look].label} · 자막 ${S.TEXT_STYLES[gst.textStyle]} · 효과 ${S.TEXT_ANIMS[gst.textAnim]} · 후킹 ${S.HOOK_STYLES[gst.hookStyle]}`,
     '',
     '[컷 구성]',

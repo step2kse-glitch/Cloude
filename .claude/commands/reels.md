@@ -10,7 +10,7 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 
 ## 0. 모드 판단
 - 입력이 `--job <ID>` 로 시작하면 **스튜디오 모드** (핸드폰 웹앱에서 호출, 비대화형): 질문할 수 없다.
-  - 작업 폴더 `drafts/reels/<ID>/`, 정보는 `job.json` (template·mode·topic·memo·sponsor·sponsorBrand·sponsorText), 자료는 `media/`.
+  - 작업 폴더 `drafts/reels/<ID>/`, 정보는 `job.json` (template·mode·targetDuration·voice·topic·memo·sponsor·sponsorBrand·sponsorText), 자료는 `media/`.
   - 결과물은 `storyboard.json` + `review.md` 만 쓰고 **렌더링은 하지 않는다** (사용자가 앱에서 자막을 고치고 "영상 만들기"를 누르는 것이 승인).
   - 확인 안 된 사실은 넣지 말고 `review.md`의 "확인 필요"에 적는다.
 - **분야(template)**: 스튜디오는 job.json의 `template`(salim / sermon / info / basic). 채팅 모드는 입력의 "설교·말씀"→sermon, "정보·방법·팁·○가지"→info, 살림템 후기→salim, 그 외 basic. 애매하면 묻는다.
@@ -43,6 +43,9 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
   "template": "salim",
   "look": null, "textStyle": null, "textAnim": null, "hookStyle": null,
   "titleBar": null,
+  "accent": null, "frame": null,
+  "targetDuration": 30,
+  "voice": true,
   "title": "내부용 제목",
   "mode": "photo",
   "mainKeyword": "다이소 배수구 클리너",
@@ -53,7 +56,8 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
   "hook": { "text": "배수구 냄새\n닦지 말고 막으세요", "start": 0, "end": 2.5 },
   "bgm": null,
   "cuts": [
-    { "type": "image", "path": "drafts/reels/<ID>/media/a.jpg", "duration": 2.5, "motion": "zoom-in", "text": "아무리 닦아도\n이틀이면 다시 냄새" },
+    { "type": "image", "path": "drafts/reels/<ID>/media/a.jpg", "duration": 2.5, "motion": "zoom-in", "text": "아무리 닦아도\n이틀이면 다시 냄새",
+      "narration": "아무리 닦아도 이틀이면 다시 냄새가 올라오죠." },
     { "type": "video", "path": "drafts/reels/<ID>/media/b.mp4", "in": 3.0, "out": 6.5, "speed": 1, "audio": true, "text": "끼우기만 하면 끝",
       "blur": [{ "x": 0.62, "y": 0.1, "w": 0.2, "h": 0.15, "reason": "아이 얼굴" }] },
     { "type": "image", "path": "...", "duration": 2.4, "subs": [{ "text": "단점도 있어요", "start": 0, "end": 1.2 }, { "text": "2주마다 교체", "start": 1.2 }] },
@@ -74,6 +78,14 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 - 자막·후킹·제목에서 `*단어*` = 강조 색. 한 자막에 강조 1곳(많아야 2곳).
 - `card`: `image`(흐리고 어둡게 깔리는 배경 사진) 또는 `background`(#색). `ref` = 작은 출처 줄(성경 장절·교회명 등, 사용자가 준 것만).
 - `titleBar`: `{ "text": "배수구 냄새 없애는 법 *3가지*" }` — 정보 릴스에서 영상 내내 상단 고정.
+- **길이**: `targetDuration`(15/30/60, 스튜디오는 job.json 값)에 맞춰 컷 수·길이를 짠다. 15초 5~6컷, 30초 8~11컷, 60초 15~20컷. 60초는 중간(25~35초)에 재후킹 한 컷.
+- **나레이션**: job.json `voice: true`(채팅 모드는 사용자가 원할 때) + 목소리 설정이 있을 때만 컷별 `narration`을 쓴다.
+  `node scripts/reels_env.js` 로 나레이션 준비 여부·배경음악 목록을 먼저 확인. "설정 없음"이면 나레이션 없이 짜고 review.md에 "설정 탭에서 Fish Audio 연결 필요".
+  - 말하듯 짧은 문장(컷당 1~2문장, 초당 약 4~5글자). 사진·카드 컷은 렌더러가 음성 길이에 맞춰 자동으로 늘린다.
+  - `text`를 비우면 나레이션 문장이 자동 자막이 된다(시간 맞춤). 숫자·기호를 화면에 보여야 하면 `text`를 따로 쓴다.
+  - 사실 규칙은 자막과 같다. 설교 나레이션은 사용자 원고·본문만, 성경 구절은 글자 그대로.
+- **배경음악**: `node scripts/reels_env.js`의 `input/bgm/` 목록(길이 포함)을 보고 파일 이름(분위기)으로 고른다 → `{ "path": "input/bgm/잔잔-피아노.mp3", "volume": 0.3, "start": 0 }`.
+  곡이 짧아도 렌더러가 크로스페이드로 이어 붙인다. 나레이션·말소리가 있으면 0.25~0.35, 없으면 0.6~0.8. 파일이 없으면 null + review.md에 안내.
 - 경로는 저장소 루트 기준. `motion`: zoom-in / zoom-out / pan-left / pan-right / pan-up / pan-down / none (생략 시 자동 교차).
 - `fit`은 보통 생략(자동). 세로 사진의 위·아래가 잘리면 안 되면 `"fit": "contain"`.
 - 영상 원본 소리에 말소리가 있으면 `"audio": true` (배경음악이 자동으로 줄어든다). 잡음뿐이면 `false`.
@@ -82,7 +94,7 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 
 ## 5. 검수 보고
 `drafts/reels/<ID>/review.md`에 쓰고(스튜디오 모드), 채팅 모드는 채팅으로도 보여준다:
-- 분야 / 필터·자막 스타일·효과 / 예상 길이 / 컷 수 / 후킹 문구와 패턴 / 페르소나 / 메인 키워드
+- 분야 / 필터·자막 스타일·효과 / 목표·예상 길이 / 컷 수 / 나레이션 글자 수(Fish Audio 크레딧) / 배경음악 / 후킹 문구와 패턴 / 페르소나 / 메인 키워드
 - (설교) 인용 구절이 사용자가 준 본문과 글자 그대로 같은지 대조 결과
 - 컷표: `#번호 | 자료 | 구간·길이 | 자막`
 - 협찬 표기 (라벨 + 게시 문구 첫 줄) 또는 "내돈내산"

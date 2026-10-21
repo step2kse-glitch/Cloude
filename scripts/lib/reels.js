@@ -198,30 +198,40 @@ async function renderOverlays(items, outDir) {
   ensureDir(outDir);
   const launchOpts = process.env.REELS_CHROMIUM ? { executablePath: process.env.REELS_CHROMIUM } : {};
   const browser = await chromium.launch(launchOpts);
-  const fontCss = S.customFontCss(ROOT);
   const results = [];
   try {
     const page = await browser.newPage({ viewport: { width: W, height: H } });
+    // 폰트를 file:// 로 한 번만 불러오는 기본 페이지 → 자막마다 #dyn(css)·#root(본문)만 바꿔 찍는다
+    const base = path.join(outDir, '_base.html');
+    fs.writeFileSync(base, S.basePageHtml(ROOT));
+    await page.goto(require('url').pathToFileURL(base).href);
+    await page.evaluate(() => document.fonts.ready);
+    const show = async (item) => {
+      const { css, body } = S.overlayParts(item);
+      await page.evaluate(([c, b]) => {
+        document.getElementById('dyn').textContent = c;
+        document.getElementById('root').innerHTML = b;
+      }, [css, body]);
+      await page.evaluate(() => document.fonts.ready);
+    };
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
-      const base = S.baseFontSize(it);
+      const baseFs = S.baseFontSize(it);
       const maxW = S.maxTextWidth(it.kind);
       // 같은 글의 단계별 등장(reveal)은 완성본과 같은 크기를 써야 글자가 흔들리지 않는다
-      let fs0 = it.sameSizeAs !== undefined ? results[it.sameSizeAs].fontSize : base;
+      let fs0 = it.sameSizeAs !== undefined ? results[it.sameSizeAs].fontSize : baseFs;
       for (let tries = 0; it.sameSizeAs === undefined && tries < 8; tries++) {
-        await page.setContent(S.overlayHtml({ ...it, reveal: Infinity, fontSize: fs0 }, fontCss));
-        await page.evaluate(() => document.fonts.ready);
+        await show({ ...it, reveal: Infinity, fontSize: fs0 });
         const widest = await page.evaluate(() =>
           Math.max(...[...document.querySelectorAll('.l,.ref')].map((e) => e.getBoundingClientRect().width))
         );
         if (widest <= maxW + 1 || fs0 <= 32) break;
         fs0 = Math.floor(fs0 * Math.min(0.95, maxW / widest));
       }
-      await page.setContent(S.overlayHtml({ ...it, fontSize: fs0 }, fontCss));
-      await page.evaluate(() => document.fonts.ready);
+      await show({ ...it, fontSize: fs0 });
       const file = path.join(outDir, `ov-${String(i).padStart(3, '0')}.png`);
       await page.screenshot({ path: file, omitBackground: true });
-      results.push({ ...it, fontSize: fs0, baseFontSize: base, png: file });
+      results.push({ ...it, fontSize: fs0, baseFontSize: baseFs, png: file });
     }
   } finally {
     await browser.close();

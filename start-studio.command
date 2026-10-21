@@ -3,6 +3,7 @@
 cd "$(dirname "$0")" || exit 1
 export PATH="$HOME/.local/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
 [ -d node_modules/ffmpeg-static ] || npm install
+ls assets/fonts/Pretendard-Bold.otf >/dev/null 2>&1 || node scripts/reels_fonts.js
 # 맥이 잠자기 하지 않도록 caffeinate 로 깨워 둡니다
 ( sleep 2; open "http://localhost:${REELS_PORT:-4321}/?key=$(cat drafts/reels/.studio-key 2>/dev/null)" ) &
 caffeinate -dimsu node scripts/reels_studio.js

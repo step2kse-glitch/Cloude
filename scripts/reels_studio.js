@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const { spawn, spawnSync } = require('child_process');
 const R = require('./lib/reels');
 const ST = require('./lib/reels_style');
+const VO = require('./lib/reels_voice');
 
 const PORT = Number(process.env.REELS_PORT || 4321);
 const UI = path.join(R.ROOT, 'studio', 'index.html');
@@ -257,7 +258,10 @@ async function status() {
     const d = path.join(R.ROOT, 'assets', 'fonts');
     return fs.existsSync(d) ? fs.readdirSync(d).find((n) => /\.(ttf|otf|woff2?)$/i.test(n)) : null;
   })();
+  const fst = ST.fontStatus(R.ROOT);
   return {
+    voice: VO.publicConfig(),
+    fonts: fst,
     ffmpeg: b.ffmpeg ? b.ffmpeg.version : null,
     ffprobe: b.ffprobe ? b.ffprobe.version : null,
     chromium: chromiumOk,
@@ -318,7 +322,33 @@ async function handle(req, res) {
       textStyles: ST.TEXT_STYLES,
       textAnims: ST.TEXT_ANIMS,
       hookStyles: ST.HOOK_STYLES,
+      frames: ST.FRAMES,
+      templateAccents: Object.fromEntries(Object.entries(ST.TEMPLATES).map(([k, v]) => [k, v.accent])),
     });
+  }
+  if (p === '/api/voice' && req.method === 'GET') return send(res, 200, { ...VO.publicConfig(), models: VO.MODELS });
+  if (p === '/api/voice' && req.method === 'PUT') {
+    const b = await readJsonBody(req);
+    const patch = {};
+    if (b.provider !== undefined) patch.provider = b.provider === 'mock' ? 'mock' : 'fish';
+    if (b.apiKey) patch.apiKey = String(b.apiKey).trim().slice(0, 200);
+    if (b.voiceId !== undefined) patch.voiceId = String(b.voiceId).trim().slice(0, 100);
+    if (b.model !== undefined && VO.MODELS[b.model]) patch.model = b.model;
+    if (b.speed !== undefined) patch.speed = Math.max(0.5, Math.min(2, Number(b.speed) || 1));
+    if (b.clearKey) patch.apiKey = '';
+    VO.saveConfig(patch);
+    return send(res, 200, VO.publicConfig());
+  }
+  if (p === '/api/voice/test' && req.method === 'POST') {
+    const b = await readJsonBody(req);
+    const text = String(b.text || '안녕하세요. 오늘도 함께해 주셔서 감사합니다.').slice(0, 120);
+    const dir = R.jobDir('_voicetest');
+    try {
+      const v = await VO.synthesize(text, dir, R);
+      return send(res, 200, { url: `/f/_voicetest/${path.basename(v.file)}`, duration: v.duration, cached: v.cached });
+    } catch (e) {
+      return fail(res, 400, e.message);
+    }
   }
   if (p === '/api/jobs' && req.method === 'GET') return send(res, 200, listJobs());
 
@@ -340,6 +370,8 @@ async function handle(req, res) {
       sponsorBrand: String(b.sponsorBrand || '').trim().slice(0, 60),
       sponsorText: String(b.sponsorText || '').trim().slice(0, 300),
       template: b.template,
+      targetDuration: [15, 30, 60].includes(Number(b.targetDuration)) ? Number(b.targetDuration) : null,
+      voice: !!b.voice,
       status: 'uploaded',
     });
     return send(res, 200, job);

@@ -17,6 +17,8 @@ echo "[1/4] 필요한 부품 설치 중..."
 npm install || fail
 echo "[2/4] 자동화용 크롬 설치 중..."
 npx playwright install chromium || fail
+echo "자막 폰트(Pretendard·고운바탕) 내려받는 중..."
+node scripts/reels_fonts.js
 echo "[3/4] Claude Code 확인 중..."
 if ! command -v claude >/dev/null 2>&1; then
   curl -fsSL https://claude.ai/install.sh | bash || fail

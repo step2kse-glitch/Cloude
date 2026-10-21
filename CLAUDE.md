@@ -27,7 +27,11 @@ scripts/reels_render.js   릴스 스토리보드 → 1080x1920 mp4 + 자동 검�
 scripts/reels_frames.js   영상 미리보기 시트 (Claude가 영상 장면·시간을 보기 위함, 읽기 전용)
 scripts/reels_studio.js   릴스 스튜디오 웹앱 서버 (핸드폰 접속, claude -p 로 /reels --job 호출)
 scripts/lib/reels.js      릴스 공용 헬퍼 (ffmpeg 경로, probe, 작업 폴더, 크롬 자막 렌더)
-scripts/lib/reels_style.js 분야 템플릿·필터(look)·타이포 자막(textStyle)·자막 효과(textAnim)
+scripts/lib/reels_style.js 분야 템플릿·필터(look)·타이포 자막(textStyle)·자막 효과(textAnim)·강조색·레터박스
+scripts/lib/reels_voice.js 나레이션 TTS (Fish Audio / 테스트용 mock), 캐시, 나레이션→자막 분할
+scripts/reels_env.js      /reels 사전 점검 (나레이션 준비·배경음악 목록·폰트, 읽기 전용)
+scripts/reels_fonts.js    자막 폰트(Pretendard·고운바탕, OFL) 내려받기 → assets/fonts/ (git 제외)
+data/voice.local.json     Fish Audio 키·목소리 ID (git 제외, 절대 커밋·출력 금지)
 data/reels-templates/     분야별 릴스 공식 (sermon.md 설교·말씀, info.md 정보)
 studio/index.html         스튜디오 화면 (내 영상 / 만들기 / 게시·예약 / 설정)
 drafts/reels/<ID>/        릴스 작업 폴더 (job.json, media/, storyboard.json, review.md, reel.mp4 …)
@@ -42,6 +46,7 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
 ## 절대 규칙
 
 1. **API 키 사용 금지** — 모든 AI 작업은 Claude Code 세션 안에서 (구독 토큰만 소모). 비대화형은 `claude -p "/write ..."`.
+   예외: 릴스 나레이션(TTS)의 Fish Audio 키는 사용자가 직접 넣는 선택 기능 — `data/voice.local.json`에만 저장(커밋·출력 금지).
 2. **발행 금지** — 임시저장까지만. 발행은 항상 사람이. 태그 입력 때문에 발행 패널을 열지만,
    `scripts/lib/common.js`의 `installPublishGuard`가 캡처 단계 리스너로 진짜 발행 버튼
    `button[data-testid="seOnePublishBtn"]` 클릭/Enter를 원천 차단한다. **어떤 경우에도 이 가드를 제거·우회하지 않는다.**
@@ -203,6 +208,10 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
 - 자막 줄은 `white-space:nowrap`이어야 폭 실측·자동 축소가 된다 (없으면 브라우저가 줄을 접어서 축소가 안 걸림).
 - 자막 효과 fade/slide: PNG를 `-loop 1 -t 구간` 입력 → `fade=alpha=1` + `setpts=+start/TB` → `overlay=eof_action=pass:eval=frame`. 효과 없는 자막은 정지 PNG + `enable`.
 - 한 단어씩(words): 단어별 누적 PNG(안 보일 단어는 `visibility:hidden`으로 자리 유지 → 글자가 흔들리지 않음). 완성 문장을 먼저 렌더해 같은 글자 크기를 쓴다.
+- 폰트는 file:// 기본 페이지에 한 번만 로드하고 자막마다 `#dyn`(css)·`#root`(본문)만 교체 (매번 setContent로 수 MB base64 폰트를 넣으면 느림).
+- Fish Audio: `POST https://api.fish.audio/v1/tts`, 헤더 `Authorization: Bearer 키`·`model: s2-pro`(또는 s1), 본문 `{text, reference_id, format:"mp3", prosody:{speed,volume}}` → mp3 바이트. (2026-10 문서 기준, 이 클라우드에선 실호출 미검증 — 첫 사용 때 설정 탭 "목소리 들어보기"로 확인)
+- 나레이션은 컷 시작+0.15초에 `adelay`로 배치 → 원본 소리와 amix → 이 트랙으로 배경음악 sidechain 덕킹.
+- 배경음악이 영상보다 짧으면 같은 파일을 여러 번 입력해 `acrossfade`(2초)로 잇는다. 아주 짧은 곡(6초 미만)만 stream_loop.
 - 명조 자막은 `body`에 고딕을 주고 `.l`에서 명조로 바꾼다 (`*{font-family}`로 주면 자식 span이 고딕으로 덮여 명조가 안 나옴).
 
 ## 버그 해결 기록

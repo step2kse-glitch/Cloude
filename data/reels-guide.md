@@ -57,18 +57,38 @@
 
 | 항목 | 값 | 느낌 |
 |---|---|---|
-| `look` 필터 | none 원본 · bright 화사하게 · warm 따뜻하게 · cool 시원하게 · vivid 선명하게 · film 필름(그레인·비네팅) · mono 흑백 · soft 몽글몽글 · moody 무드(차분·어둡게) · golden 노을빛 | 컷별 덮어쓰기 가능 |
-| `textStyle` 자막 | outline 굵은 외곽선 · box 반투명 박스 · marker 형광펜 강조 · serif 명조 감성 · bigbold 대형 타이포 · minimal 미니멀 | 컷별 덮어쓰기 가능 |
+| `look` 필터 | none 원본 · bright 화사하게 · warm 따뜻하게 · cool 시원하게 · vivid 선명하게 · film 필름(그레인·비네팅) · mono 흑백 · soft 몽글몽글 · moody 무드(차분·어둡게) · golden 노을빛 · cinematic 시네마틱(틸·오렌지) · pastel 파스텔 | 컷별 덮어쓰기 가능 |
+| `textStyle` 자막 | clean 깔끔(부드러운 그림자·하단 그라데이션) · glass 흰 카드 · editorial 에디토리얼 명조 · cinema 시네마(작고 넓은 자간) · outline 굵은 외곽선 · box 반투명 박스 · marker 형광펜 · serif 명조 감성 · bigbold 대형 타이포 · minimal 미니멀 | 컷별 덮어쓰기 가능 |
 | `textAnim` 효과 | none · fade 스르륵 · slide 아래서 올라옴 · words 한 단어씩(14단어 이하) | 컷별 덮어쓰기 가능 |
-| `hookStyle` 후킹 | yellow 노란 박스 · serif 명조+금색 선 · block 흰 블록 대형 | 영상 전체 |
+| `hookStyle` 후킹 | accent 포인트 박스 · minimal 대형+포인트 선 · glass 흰 카드 · serif 명조+금색 선 · block 흰 블록 대형 | 영상 전체 |
+| `accent` 강조색 | #RRGGBB (분야 기본: 살림 #FFD84D · 정보 #FFD400 · 설교 #E9C77B) | 브랜드 색 하나로 통일하면 세련돼 보임 |
+| `frame` | none · letterbox(위아래 검은 띠, 시네마 느낌) | 영상 전체 |
 
 | 분야 기본값 | 필터 | 자막 | 효과 | 후킹 |
 |---|---|---|---|---|
-| salim 살림템 | bright | outline | fade | yellow |
+| salim 살림템 | bright | clean | fade | accent |
 | sermon 설교·말씀 | moody | serif | fade | serif |
 | info 정보 | vivid | bigbold | words | block |
-| basic 기본 | none | outline | none | yellow |
+| basic 기본 | none | clean | fade | minimal |
 
 - 강조: 자막 안에서 `*단어*` → 스타일별 강조색(노랑·금색·형광펜). 한 자막에 1곳이 가장 효과적.
 - 한 영상 안에서 필터를 3개 이상 섞지 않는다 (톤이 흩어짐). 자막 스타일은 1~2개.
 - 자체 폰트: `assets/fonts/`에 고딕 1개 + 명조 1개(파일명에 serif·myeongjo·명조 포함) — 상업 이용 가능 라이선스만.
+
+### 세련되게 보이는 조합 (추천)
+- 감성·브이로그: `cinematic` + `cinema` + letterbox + 강조색 하나 (하늘색·살구색)
+- 깔끔한 후기: `bright` + `clean` + 후킹 `minimal`
+- 카드뉴스 느낌 정보: `pastel` + `glass` + 후킹 `glass`
+- 묵상·에세이: `moody`/`golden` + `editorial` 또는 `serif`
+- 폰트: `npm run fonts` → Pretendard(고딕)·고운바탕(명조) 자동 사용 (무료 OFL)
+
+## 나레이션 (Fish Audio — 선택)
+- 설정: 스튜디오 설정 탭에 Fish Audio API 키 + 목소리 ID (data/voice.local.json, 커밋 금지). 요금은 글자 수 기준 → 같은 문장은 캐시로 재사용.
+- 컷마다 `narration`. 말하듯 짧게(컷당 1~2문장). 자막(`text`)을 비우면 나레이션이 자동 자막이 된다.
+- 목소리 복제는 본인·허락받은 목소리만. 연예인·타인 목소리 흉내 금지.
+
+## 배경음악·길이
+- `targetDuration` 15 / 30 / 60초. 곡이 짧으면 크로스페이드로 자연스럽게 이어 붙이고, 끝 2초 페이드아웃.
+- 말소리·나레이션 구간에서는 배경음악이 자동으로 작아진다(덕킹).
+- 저작권 프리 음원만: 유튜브 오디오 보관함, Pixabay Music 등. 파일 이름에 분위기를 적어 두면 AI가 고른다 (잔잔-피아노.mp3).
+- 인스타 노출을 노리면 배경음악 없이 만들고 인스타 앱에서 인기 음악을 붙이는 것도 방법 (그때는 `bgm: null`).

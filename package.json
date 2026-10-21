@@ -9,10 +9,11 @@
     "draft": "node scripts/naver_draft.js",
     "probe": "node scripts/probe_selectors.js",
     "mosaic": "node scripts/mosaic.js",
-    "check": "node --check scripts/naver_draft.js && node --check scripts/naver_login.js && node --check scripts/mosaic.js && node --check scripts/probe_selectors.js && node --check scripts/lib/common.js && node --check scripts/reels_render.js && node --check scripts/reels_frames.js && node --check scripts/reels_studio.js && node --check scripts/lib/reels.js && node --check scripts/lib/reels_style.js",
+    "check": "node --check scripts/naver_draft.js && node --check scripts/naver_login.js && node --check scripts/mosaic.js && node --check scripts/probe_selectors.js && node --check scripts/lib/common.js && node --check scripts/reels_render.js && node --check scripts/reels_frames.js && node --check scripts/reels_studio.js && node --check scripts/lib/reels.js && node --check scripts/lib/reels_style.js && node --check scripts/lib/reels_voice.js && node --check scripts/reels_fonts.js && node --check scripts/reels_env.js",
     "studio": "node scripts/reels_studio.js",
     "reels:render": "node scripts/reels_render.js",
-    "reels:frames": "node scripts/reels_frames.js"
+    "reels:frames": "node scripts/reels_frames.js",
+    "fonts": "node scripts/reels_fonts.js"
   },
   "dependencies": {
     "ffmpeg-static": "^5.3.0",
