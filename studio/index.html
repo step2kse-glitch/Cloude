@@ -76,7 +76,7 @@ textarea{min-height:90px;resize:vertical;line-height:1.5}
 .cut .th em{position:absolute;left:4px;top:4px;background:rgba(0,0,0,.6);color:#fff;font-style:normal;font-size:11px;padding:2px 6px;border-radius:6px}
 .cut .body{flex:1;min-width:0}
 .cut .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.cut .meta input,.cut .meta select{width:auto;padding:8px 10px;font-size:14px;border-radius:12px;flex:1;min-width:70px}
+.cut .meta input,.cut .meta select{width:auto;padding:8px 10px;font-size:14px;border-radius:12px;flex:1;min-width:90px}.cut .meta select{min-width:120px}
 .cut textarea{min-height:60px;font-size:15px;padding:10px 12px}
 .cut .lab{font-size:12px;color:var(--sub);margin:0 0 4px}
 pre.rev{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.65;background:#FAFAF7;border-radius:16px;padding:16px;margin:0;max-height:420px;overflow:auto}
@@ -116,6 +116,14 @@ const STATUS = { uploaded: '자료 올림', storyboarding: 'AI 구성 중', stor
 const SPONSOR = { none: '내돈내산 (협찬 아님)', product: '제품 무상 제공', fee: '원고료 받음', product_fee: '제품 + 원고료', custom: '업체 지정 문구 있음' };
 const MOTION = { 'zoom-in': '천천히 확대', 'zoom-out': '천천히 축소', 'pan-left': '왼→오 이동', 'pan-right': '오→왼 이동', 'pan-up': '위로 이동', 'pan-down': '아래로 이동', none: '고정' };
 let timer = null;
+let STYLES = null;
+const styles = async () => (STYLES = STYLES || (await api('/api/styles')));
+const TPL_UI = {
+  salim: { ic: '🧽', d: '살림템 실사용 후기', memo: '사진 순서·원하는 분위기를 적어 주세요.&#10;예: 냄새 때문에 고생한 얘기로 시작, 마지막에 2주 후 상태.' },
+  sermon: { ic: '🕊️', d: '말씀·묵상·설교 요약', memo: '본문 말씀을 역본·장절과 함께 그대로 붙여넣어 주세요.&#10;예: 마태복음 11:28 (개역개정) 수고하고 무거운 짐 진 자들아…&#10;핵심 메시지 2~3줄, 마무리 축복 문장도 적어 주세요.' },
+  info: { ic: '💡', d: '방법·팁·정리 (○가지)', memo: '전달할 정보를 순서대로 적어 주세요. 숫자·사실은 여기 적은 것만 써요.&#10;예: 1) 베이킹소다 반 컵 2) 식초 붓고 10분 3) 뜨거운 물' },
+  basic: { ic: '🎬', d: '일상·브이로그·자유', memo: '원하는 분위기와 사진 순서를 적어 주세요.' },
+};
 
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
 async function api(path, opt = {}) {
@@ -158,20 +166,22 @@ function jobCard(j) {
 }
 
 // ---------------- 만들기 ----------------
-let draft = { mode: 'photo', files: [] };
+let draft = { mode: 'photo', template: 'salim', files: [] };
 function create() {
   view.innerHTML = `
     <div class="eyebrow">새로운 이야기의 시작</div><h1>무엇으로 만들까요?</h1>
     <p class="lead">사진과 주제만 있어도 충분해요.</p>
     <div class="card">
-      <label class="f" style="margin-top:0">1. 사용할 자료</label>
+      <label class="f" style="margin-top:0">1. 분야</label>
+      <div class="opts" id="tpls">${Object.entries(TPL_UI).map(([k, v]) => `<button class="opt tpl" data-tpl="${k}" style="padding:14px"><div class="ic" style="font-size:24px">${v.ic}</div><b style="font-size:16px;margin:6px 0 4px">${{ salim: '살림템 후기', sermon: '설교·말씀', info: '정보 릴스', basic: '기본' }[k]}</b><span style="font-size:13px">${v.d}</span></button>`).join('')}</div>
+      <label class="f">2. 사용할 자료</label>
       <div class="opts">
         <button class="opt" data-mode="footage"><div class="ic">🎞️</div><b>촬영 영상</b><span>말하는 영상·현장 클립을 편집해요.</span></button>
         <button class="opt" data-mode="photo"><div class="ic">🖼️</div><b>사진으로 만들기</b><span>사진에 움직임과 이야기를 더해요.</span></button>
       </div>
-      <label class="f">2. 주제·제목</label>
+      <label class="f">3. 주제·제목</label>
       <input type="text" id="topic" maxlength="100" placeholder="예: 다이소 배수구 클리너 2주 사용 후기">
-      <label class="f">3. 협찬 여부</label>
+      <label class="f">4. 협찬 여부</label>
       <select id="sponsor"><option value="">골라 주세요</option>${Object.entries(SPONSOR).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
       <div id="sponsorMore" style="display:none">
         <input type="text" id="sponsorBrand" maxlength="60" placeholder="업체명 (예: ○○리빙)" style="margin-top:10px">
@@ -181,16 +191,24 @@ function create() {
       <label class="f">요구사항 메모</label>
       <textarea id="memo" maxlength="2000" placeholder="사진 순서·원하는 분위기를 적어 주세요.&#10;예: 냄새 때문에 고생한 얘기로 시작, 마지막에 2주 후 상태. 잔잔한 분위기."></textarea>
       <div class="hint">가격·사용 기간·단점처럼 사실 정보는 여기에 적어 주세요. 적지 않은 사실은 영상에 넣지 않아요.</div>
-      <label class="f">4. 자료 올리기</label>
+      <label class="f">5. 자료 올리기</label>
       <label class="pick" for="fileIn">📎 사진·영상 고르기 (여러 장 가능)<input id="fileIn" type="file" multiple accept="image/jpeg,image/png,image/webp,video/*" hidden></label>
       <div class="files" id="fileList"></div>
       <div class="bar" id="bar" style="display:none"><i></i></div>
       <div style="margin-top:22px"><button class="btn block" id="go">자료 올리고 시작하기 ↗</button></div>
     </div>`;
-  const setMode = (m) => { draft.mode = m; view.querySelectorAll('.opt').forEach((o) => o.classList.toggle('on', o.dataset.mode === m)); };
-  view.querySelectorAll('.opt').forEach((o) => (o.onclick = () => setMode(o.dataset.mode)));
+  const setMode = (m) => { draft.mode = m; view.querySelectorAll('.opt[data-mode]').forEach((o) => o.classList.toggle('on', o.dataset.mode === m)); };
+  view.querySelectorAll('.opt[data-mode]').forEach((o) => (o.onclick = () => setMode(o.dataset.mode)));
   setMode(draft.mode);
+  const setTpl = (t) => {
+    draft.template = t;
+    view.querySelectorAll('.tpl').forEach((o) => o.classList.toggle('on', o.dataset.tpl === t));
+    const tmp = document.createElement('div'); tmp.innerHTML = TPL_UI[t].memo; $('#memo').placeholder = tmp.textContent;
+    if (t === 'sermon' && !$('#sponsor').value) { $('#sponsor').value = 'none'; $('#sponsor').onchange({ target: $('#sponsor') }); }
+  };
+  view.querySelectorAll('.tpl').forEach((o) => (o.onclick = () => setTpl(o.dataset.tpl)));
   $('#sponsor').onchange = (e) => { const v = e.target.value; $('#sponsorMore').style.display = v && v !== 'none' ? '' : 'none'; $('#sponsorText').style.display = v === 'custom' ? '' : 'none'; };
+  setTpl(draft.template);
   $('#fileIn').onchange = (e) => { draft.files = [...draft.files, ...e.target.files]; drawFiles(); };
   drawFiles();
   $('#go').onclick = submitCreate;
@@ -221,14 +239,14 @@ async function submitCreate() {
   const go = $('#go'); go.disabled = true; go.textContent = '올리는 중...';
   const bar = $('#bar'); bar.style.display = ''; const fill = bar.firstElementChild;
   try {
-    const job = await api('/api/jobs', { method: 'POST', body: { mode: draft.mode, topic, memo: $('#memo').value, sponsor, sponsorBrand: $('#sponsorBrand').value, sponsorText: $('#sponsorText').value } });
+    const job = await api('/api/jobs', { method: 'POST', body: { mode: draft.mode, template: draft.template, topic, memo: $('#memo').value, sponsor, sponsorBrand: $('#sponsorBrand').value, sponsorText: $('#sponsorText').value } });
     const total = draft.files.reduce((s, f) => s + f.size, 0) || 1; let done = 0;
     for (const f of draft.files) {
       await uploadFile(`/api/jobs/${job.id}/media?name=${encodeURIComponent(f.name)}`, f, (n) => (fill.style.width = `${((done + n) / total) * 100}%`));
       done += f.size;
     }
     await api(`/api/jobs/${job.id}/storyboard`, { method: 'POST' });
-    draft = { mode: 'photo', files: [] };
+    draft = { mode: 'photo', template: 'salim', files: [] };
     location.hash = `#job/${job.id}`;
   } catch (e) { toast(e.message); go.disabled = false; go.textContent = '자료 올리고 시작하기 ↗'; }
 }
@@ -236,6 +254,7 @@ async function submitCreate() {
 // ---------------- 작업 상세 ----------------
 let cur = null;
 async function jobView(id) {
+  await styles();
   const d = await api(`/api/jobs/${id}`);
   cur = d;
   const j = d.job; const st = statusOf(j); const busy = ['storyboarding', 'rendering'].includes(j.status);
@@ -260,7 +279,7 @@ async function jobView(id) {
 
   view.innerHTML = `<div class="eyebrow"><a href="#home" style="color:inherit">← 내 영상</a></div>
     <h1 style="font-size:26px">${h(j.title)}</h1>
-    <p class="lead" style="margin-bottom:8px"><span class="badge ${st}">${STATUS[st] || st}</span> · ${j.mode === 'footage' ? '촬영 영상' : '사진'} · ${SPONSOR[j.sponsor] || (d.storyboard && d.storyboard.sponsored ? '협찬' : '협찬 정보 없음')}</p>${body}`;
+    <p class="lead" style="margin-bottom:8px"><span class="badge ${st}">${STATUS[st] || st}</span> · ${h((STYLES.templates[(d.storyboard && d.storyboard.template) || j.template] || {}).label || '')} · ${j.mode === 'footage' ? '촬영 영상' : '사진'} · ${SPONSOR[j.sponsor] || (d.storyboard && d.storyboard.sponsored ? '협찬' : '협찬 정보 없음')}</p>${body}`;
   bindJob(d);
   if (busy) timer = setTimeout(route, 2500);
 }
@@ -269,21 +288,23 @@ function storyboardEditor(d) {
   const sb = d.storyboard;
   const cuts = sb.cuts.map((c, i) => {
     const isV = c.type === 'video'; const isCard = c.type === 'card';
-    const th = isCard ? `<div class="th" style="background:${h(c.background || '#111')}"><em>#${i + 1} 글자</em></div>`
+    const th = isCard ? `<div class="th" style="background:${c._url ? `#222 url(${h(c._url)}) center/cover` : h(c.background || '#111')}"><em>#${i + 1} 글자</em></div>`
       : isV ? `<div class="th"><video src="${h(c._url)}#t=${Number(c.in || 0)}" muted playsinline preload="metadata"></video><em>#${i + 1} 영상</em></div>`
       : `<div class="th" style="background-image:url(${h(c._url)})"><em>#${i + 1} 사진</em></div>`;
     const timing = isV
       ? `<input type="number" step="0.1" min="0" data-k="in" data-i="${i}" value="${c.in ?? 0}" title="시작(초)"><input type="number" step="0.1" min="0" data-k="out" data-i="${i}" value="${c.out ?? ''}" title="끝(초)">`
       : `<input type="number" step="0.1" min="0.5" max="8" data-k="duration" data-i="${i}" value="${c.duration}" title="길이(초)">`;
     const motion = c.type === 'image' ? `<select data-k="motion" data-i="${i}">${Object.entries(MOTION).map(([k, v]) => `<option value="${k}" ${c.motion === k ? 'selected' : ''}>${v}</option>`).join('')}</select>` : '';
+    const look = !isCard || c.image ? `<select data-k="look" data-i="${i}" title="이 컷만 필터"><option value="">필터: 전체와 같게</option>${Object.entries(STYLES.looks).map(([k, v]) => `<option value="${k}" ${c.look === k ? 'selected' : ''}>필터: ${v}</option>`).join('')}</select>` : '';
     const subsNote = Array.isArray(c.subs) && c.subs.length ? `<div class="hint">세부 자막 ${c.subs.length}개 (시간 나눔) — 아래 칸을 고치면 한 자막으로 합쳐져요.</div>` : '';
     const text = Array.isArray(c.subs) && c.subs.length ? c.subs.map((s) => s.text).join('\n') : c.text || '';
     const blur = (c.blur || []).length ? `<div class="hint">🔒 모자이크 ${c.blur.length}곳: ${h(c.blur.map((b) => b.reason || '개인정보').join(', '))}</div>` : '';
-    return `<div class="cut">${th}<div class="body"><div class="lab">${isV ? '시작~끝(초)' : '길이(초)'}${motion ? ' · 움직임' : ''}</div><div class="meta">${timing}${motion}</div>
-      <div class="lab">자막 (한 줄 14자 이내, 최대 2줄)</div><textarea data-k="text" data-i="${i}" ${Array.isArray(c.subs) && c.subs.length ? 'data-subs="1"' : ''}>${h(text)}</textarea>${subsNote}${blur}</div></div>`;
+    return `<div class="cut">${th}<div class="body"><div class="lab">${isV ? '시작~끝(초)' : '길이(초)'}${motion ? ' · 움직임' : ''}</div><div class="meta">${timing}${motion}${look}</div>
+      <div class="lab">자막 (한 줄 14자 이내, 최대 2줄)</div><textarea data-k="text" data-i="${i}" ${Array.isArray(c.subs) && c.subs.length ? 'data-subs="1"' : ''}>${h(text)}</textarea>${c.ref ? `<div class="hint">📖 출처: ${h(c.ref)}</div>` : ''}${subsNote}${blur}</div></div>`;
   }).join('');
   return `<div class="card"><b>스토리보드</b><span class="muted" style="font-size:13px"> · 컷 ${sb.cuts.length}개 · 예상 ${estimate(sb).toFixed(1)}초</span>
     ${sb.sponsored ? `<div class="hint" style="margin-top:8px">📢 협찬 표기: <b>${h(sb.disclosure)}</b> (영상 전체 좌상단)</div>` : ''}
+    ${styleControls(sb)}
     <label class="f">첫 화면 후킹 문구 (처음 2~3초)</label><textarea id="hookText" style="min-height:64px">${h((sb.hook && sb.hook.text) || '')}</textarea>
     <label class="f">배경음악</label><select id="bgmSel"><option value="">없음</option></select>
     <div class="hint">설정 탭에서 배경음악 파일(mp3)을 올릴 수 있어요. 저작권 걱정 없는 무료 음원을 쓰세요.</div>
@@ -293,6 +314,17 @@ function storyboardEditor(d) {
       <button class="btn ghost" id="fast">빠른 미리보기</button>
       <button class="btn" id="render">영상 만들기</button></div>
     <div class="hint">"영상 만들기"를 누르는 것이 이 스토리보드를 승인하는 거예요. 게시는 영상을 확인한 뒤 직접 해요.</div></div>`;
+}
+function styleControls(sb) {
+  const tpl = STYLES.templates[sb.template] || STYLES.templates.salim;
+  const sel = (id, map, curV, defK) => `<select id="${id}"><option value="">분야 기본 (${h(map[defK])})</option>${Object.entries(map).map(([k, v]) => `<option value="${k}" ${curV === k ? 'selected' : ''}>${h(v)}</option>`).join('')}</select>`;
+  return `<div class="hint" style="margin-top:10px">분야: <b>${h(tpl.label)}</b></div>
+    <label class="f">🎨 필터 (색감)</label>${sel('stLook', STYLES.looks, sb.look, tpl.look)}
+    <label class="f">🔤 자막 스타일</label>${sel('stText', STYLES.textStyles, sb.textStyle, tpl.textStyle)}
+    <label class="f">✨ 자막 효과</label>${sel('stAnim', STYLES.textAnims, sb.textAnim, tpl.textAnim)}
+    <label class="f">🪝 후킹 스타일</label>${sel('stHook', STYLES.hookStyles, sb.hookStyle, tpl.hookStyle)}
+    <label class="f">📌 상단 고정 제목 (정보 릴스용, 비우면 없음)</label><input type="text" id="stTitle" maxlength="40" value="${h((sb.titleBar && sb.titleBar.text) || '')}" placeholder="예: 배수구 냄새 없애는 법 *3가지*">
+    <div class="hint">자막에서 <b>*단어*</b>처럼 별표로 감싸면 강조 색으로 나와요.</div>`;
 }
 function estimate(sb) { return sb.cuts.reduce((s, c) => s + (c.type === 'video' ? ((Number(c.out) || 0) - (Number(c.in) || 0)) / (Number(c.speed) || 1) : Number(c.duration) || 0), 0); }
 
@@ -304,10 +336,15 @@ function collect() {
       const orig = Array.isArray(c.subs) && c.subs.length ? c.subs.map((s) => s.text).join('\n') : c.text || '';
       if (el.value !== orig) { delete c.subs; c.text = el.value.trim(); }
     } else if (k === 'motion') c.motion = el.value;
+    else if (k === 'look') { if (el.value) c.look = el.value; else delete c.look; }
     else if (el.value !== '') c[k] = Number(el.value);
   });
   const hk = $('#hookText').value.trim();
   sb.hook = hk ? { ...(sb.hook || {}), text: hk, start: (sb.hook && sb.hook.start) || 0, end: (sb.hook && sb.hook.end) || 2.5 } : null;
+  const pick = (id, key) => { const v = $(id).value; if (v) sb[key] = v; else delete sb[key]; };
+  pick('#stLook', 'look'); pick('#stText', 'textStyle'); pick('#stAnim', 'textAnim'); pick('#stHook', 'hookStyle');
+  const tt = $('#stTitle').value.trim();
+  if (tt) sb.titleBar = { ...(sb.titleBar || {}), text: tt }; else delete sb.titleBar;
   const bg = $('#bgmSel').value;
   sb.bgm = bg ? { ...(sb.bgm || {}), path: bg } : null;
   return sb;

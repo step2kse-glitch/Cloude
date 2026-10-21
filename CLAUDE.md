@@ -27,6 +27,8 @@ scripts/reels_render.js   릴스 스토리보드 → 1080x1920 mp4 + 자동 검�
 scripts/reels_frames.js   영상 미리보기 시트 (Claude가 영상 장면·시간을 보기 위함, 읽기 전용)
 scripts/reels_studio.js   릴스 스튜디오 웹앱 서버 (핸드폰 접속, claude -p 로 /reels --job 호출)
 scripts/lib/reels.js      릴스 공용 헬퍼 (ffmpeg 경로, probe, 작업 폴더, 크롬 자막 렌더)
+scripts/lib/reels_style.js 분야 템플릿·필터(look)·타이포 자막(textStyle)·자막 효과(textAnim)
+data/reels-templates/     분야별 릴스 공식 (sermon.md 설교·말씀, info.md 정보)
 studio/index.html         스튜디오 화면 (내 영상 / 만들기 / 게시·예약 / 설정)
 drafts/reels/<ID>/        릴스 작업 폴더 (job.json, media/, storyboard.json, review.md, reel.mp4 …)
 input/bgm/                배경음악 (저작권 프리 음원만)
@@ -183,7 +185,9 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
 
 ## 릴스 (/reels · 릴스 스튜디오)
 
-- 공식: `data/reels-guide.md`. 블로그와 같은 절대 규칙(사실·협찬·사생활) 적용. **게시(업로드) 자동화 금지** — mp4와 문구까지만.
+- 분야(template): salim 살림템 / sermon 설교·말씀 / info 정보 / basic. 공식: `data/reels-guide.md`(공통·스타일 표) + `data/reels-templates/<분야>.md`.
+- **설교 릴스의 성경 구절은 사용자가 준 본문 글자 그대로만** (기억 인용·의역 금지, 출처는 `ref`에 역본 포함).
+- 공식: 블로그와 같은 절대 규칙(사실·협찬·사생활) 적용. **게시(업로드) 자동화 금지** — mp4와 문구까지만.
 - 협찬 영상: `sponsored: true` + `disclosure` 라벨이 영상 전 구간 좌상단에 렌더링되고, 게시 문구 첫 줄에도 들어간다. 렌더러가 누락·거짓 부인 표현을 오류로 막는다.
 - 개인정보: 컷별 `blur` 영역(보이는 화면 기준 0~1)으로 모자이크. 원본 파일은 건드리지 않는다.
 - 스튜디오 모드(`/reels --job <ID>`)는 비대화형 → 질문 대신 `review.md`의 "확인 필요"에 적고, 렌더링은 사용자가 앱에서 "영상 만들기"를 눌러 승인할 때만.
@@ -196,6 +200,10 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
 - 사진은 sharp `.rotate()`로 EXIF 방향을 먼저 확정한 뒤 2배 캔버스(2160x3840)에서 zoompan → 떨림 감소.
 - 세그먼트를 같은 규격으로 만든 뒤 concat(-c copy) → 최종 1회 인코딩(자막·BGM·loudnorm -14 LUFS).
 - 작업 ID에 한글 슬러그가 들어간다 → ID 검사 정규식은 `[\w가-힣.-]`.
+- 자막 줄은 `white-space:nowrap`이어야 폭 실측·자동 축소가 된다 (없으면 브라우저가 줄을 접어서 축소가 안 걸림).
+- 자막 효과 fade/slide: PNG를 `-loop 1 -t 구간` 입력 → `fade=alpha=1` + `setpts=+start/TB` → `overlay=eof_action=pass:eval=frame`. 효과 없는 자막은 정지 PNG + `enable`.
+- 한 단어씩(words): 단어별 누적 PNG(안 보일 단어는 `visibility:hidden`으로 자리 유지 → 글자가 흔들리지 않음). 완성 문장을 먼저 렌더해 같은 글자 크기를 쓴다.
+- 명조 자막은 `body`에 고딕을 주고 `.l`에서 명조로 바꾼다 (`*{font-family}`로 주면 자식 span이 고딕으로 덮여 명조가 안 나옴).
 
 ## 버그 해결 기록
 

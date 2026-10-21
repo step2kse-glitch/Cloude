@@ -1,4 +1,6 @@
-# 릴스·쇼츠 제작 공식 (살림 꿀템) — /reels 가 매번 읽는다
+# 릴스·쇼츠 제작 공식 — 공통 + 살림템 (template: "salim") — /reels 가 매번 읽는다
+
+분야별 공식: 설교·말씀 → `data/reels-templates/sermon.md`, 정보 → `data/reels-templates/info.md`.
 
 블로그 글과 같은 화자(`data/blogger-profile.md`), 같은 사실 규칙(지어내기 금지·협찬 표기·가족 사생활 보호)을 따른다.
 블로그가 "검색해서 읽는 글"이라면 릴스는 "스크롤 멈추게 하는 15초"다.
@@ -50,3 +52,23 @@
 ## 업로드 시간대·주기 (사람이 직접 올린다)
 - 살림 주부 타겟: 오전 9~11시, 밤 9~11시. 주 2~4회.
 - 같은 영상을 인스타·유튜브에 올릴 땐 각 앱에서 올린다 (워터마크 없는 원본 사용).
+
+## 스타일 (모든 분야 공통 — 값이 null이면 분야 기본값)
+
+| 항목 | 값 | 느낌 |
+|---|---|---|
+| `look` 필터 | none 원본 · bright 화사하게 · warm 따뜻하게 · cool 시원하게 · vivid 선명하게 · film 필름(그레인·비네팅) · mono 흑백 · soft 몽글몽글 · moody 무드(차분·어둡게) · golden 노을빛 | 컷별 덮어쓰기 가능 |
+| `textStyle` 자막 | outline 굵은 외곽선 · box 반투명 박스 · marker 형광펜 강조 · serif 명조 감성 · bigbold 대형 타이포 · minimal 미니멀 | 컷별 덮어쓰기 가능 |
+| `textAnim` 효과 | none · fade 스르륵 · slide 아래서 올라옴 · words 한 단어씩(14단어 이하) | 컷별 덮어쓰기 가능 |
+| `hookStyle` 후킹 | yellow 노란 박스 · serif 명조+금색 선 · block 흰 블록 대형 | 영상 전체 |
+
+| 분야 기본값 | 필터 | 자막 | 효과 | 후킹 |
+|---|---|---|---|---|
+| salim 살림템 | bright | outline | fade | yellow |
+| sermon 설교·말씀 | moody | serif | fade | serif |
+| info 정보 | vivid | bigbold | words | block |
+| basic 기본 | none | outline | none | yellow |
+
+- 강조: 자막 안에서 `*단어*` → 스타일별 강조색(노랑·금색·형광펜). 한 자막에 1곳이 가장 효과적.
+- 한 영상 안에서 필터를 3개 이상 섞지 않는다 (톤이 흩어짐). 자막 스타일은 1~2개.
+- 자체 폰트: `assets/fonts/`에 고딕 1개 + 명조 1개(파일명에 serif·myeongjo·명조 포함) — 상업 이용 가능 라이선스만.

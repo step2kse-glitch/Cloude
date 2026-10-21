@@ -9,6 +9,7 @@ const http = require('http');
 const crypto = require('crypto');
 const { spawn, spawnSync } = require('child_process');
 const R = require('./lib/reels');
+const ST = require('./lib/reels_style');
 
 const PORT = Number(process.env.REELS_PORT || 4321);
 const UI = path.join(R.ROOT, 'studio', 'index.html');
@@ -309,6 +310,16 @@ async function handle(req, res) {
   }
 
   if (p === '/api/status' && req.method === 'GET') return send(res, 200, await status());
+  if (p === '/api/styles' && req.method === 'GET') {
+    const labels = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, typeof v === 'string' ? v : v.label]));
+    return send(res, 200, {
+      templates: Object.fromEntries(Object.entries(ST.TEMPLATES).map(([k, v]) => [k, { label: v.label, look: v.look, textStyle: v.textStyle, textAnim: v.textAnim, hookStyle: v.hookStyle }])),
+      looks: labels(ST.LOOKS),
+      textStyles: ST.TEXT_STYLES,
+      textAnims: ST.TEXT_ANIMS,
+      hookStyles: ST.HOOK_STYLES,
+    });
+  }
   if (p === '/api/jobs' && req.method === 'GET') return send(res, 200, listJobs());
 
   if (p === '/api/jobs' && req.method === 'POST') {
@@ -316,6 +327,7 @@ async function handle(req, res) {
     if (!['photo', 'footage'].includes(b.mode)) return fail(res, 400, '자료 종류를 골라 주세요.');
     if (!String(b.topic || '').trim()) return fail(res, 400, '주제를 적어 주세요.');
     if (!['none', 'product', 'fee', 'product_fee', 'custom'].includes(b.sponsor)) return fail(res, 400, '협찬 여부를 골라 주세요.');
+    if (!ST.TEMPLATES[b.template]) return fail(res, 400, '분야를 골라 주세요.');
     const id = R.newJobId(b.topic);
     R.ensureDir(path.join(R.jobDir(id), 'media'));
     const job = R.updateJob(id, {
@@ -327,6 +339,7 @@ async function handle(req, res) {
       sponsor: b.sponsor,
       sponsorBrand: String(b.sponsorBrand || '').trim().slice(0, 60),
       sponsorText: String(b.sponsorText || '').trim().slice(0, 300),
+      template: b.template,
       status: 'uploaded',
     });
     return send(res, 200, job);
@@ -355,7 +368,7 @@ async function handle(req, res) {
 
   if (action === '' && req.method === 'GET') {
     const sb = R.readJson(path.join(dir, 'storyboard.json'));
-    if (sb && Array.isArray(sb.cuts)) for (const c of sb.cuts) c._url = mediaUrl(c.path);
+    if (sb && Array.isArray(sb.cuts)) for (const c of sb.cuts) c._url = mediaUrl(c.path || c.image);
     const read = (f) => (fs.existsSync(path.join(dir, f)) ? fs.readFileSync(path.join(dir, f), 'utf8') : null);
     return send(res, 200, {
       job: jobSummary(id),

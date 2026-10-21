@@ -190,88 +190,38 @@ function newJobId(topic = '') {
   return slug ? `${stamp}-${slug}` : stamp;
 }
 
-// ---------- 크롬으로 자막 PNG 렌더링 ----------
-const FONT_STACK =
-  "'ReelsCustom','Pretendard','Apple SD Gothic Neo','AppleSDGothicNeo','Malgun Gothic','맑은 고딕','NanumSquareRound','NanumGothic','Noto Sans CJK KR','Noto Sans KR',sans-serif";
-
-// assets/fonts/ 에 ttf/otf를 넣으면 그 폰트를 최우선 사용
-function customFontCss() {
-  const dir = path.join(ROOT, 'assets', 'fonts');
-  if (!fs.existsSync(dir)) return '';
-  const f = fs.readdirSync(dir).find((n) => /\.(ttf|otf|woff2?)$/i.test(n));
-  if (!f) return '';
-  const data = fs.readFileSync(path.join(dir, f)).toString('base64');
-  const fmt = { '.ttf': 'truetype', '.otf': 'opentype', '.woff': 'woff', '.woff2': 'woff2' }[path.extname(f).toLowerCase()];
-  return `@font-face{font-family:'ReelsCustom';src:url(data:font/${fmt};base64,${data}) format('${fmt}');}`;
-}
-
-// 두꺼운 검은 외곽선: 16방향 text-shadow (paint-order 미지원 환경에서도 동일하게 보임)
-const ring = (r) =>
-  Array.from({ length: 16 }, (_, i) => {
-    const a = (i / 16) * Math.PI * 2;
-    return `${(Math.cos(a) * r).toFixed(1)}px ${(Math.sin(a) * r).toFixed(1)}px 0 #000`;
-  }).join(',');
-
-const esc = (s) =>
-  String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-
-// 스타일: sub(하단 자막) / hook(상단 후킹 제목) / card(가운데 큰 글씨) / label(좌상단 광고 표기)
-// 위치는 릴스·쇼츠 UI 안전영역(상단 14%, 하단 22% 가림) 안쪽.
-function overlayHtml(item, fontCss) {
-  const lines = String(item.text)
-    .split('\n')
-    .map((l) => `<div><span class="l">${esc(l)}</span></div>`)
-    .join('');
-  const styles = {
-    sub: `.wrap{position:absolute;left:70px;right:70px;top:${Math.round(H * 0.62)}px;text-align:center}
-      .l{display:inline-block;font-size:var(--fs);font-weight:800;color:#fff;line-height:1.25;
-         text-shadow:${ring(7)},0 6px 18px rgba(0,0,0,.5)}`,
-    hook: `.wrap{position:absolute;left:60px;right:60px;top:${Math.round(H * 0.16)}px;text-align:center}
-      .l{display:inline-block;font-size:var(--fs);font-weight:900;color:#111;background:#FFE14D;
-         padding:6px 26px;margin:6px 0;border-radius:18px;line-height:1.22;box-shadow:0 8px 24px rgba(0,0,0,.3)}`,
-    card: `.wrap{position:absolute;left:70px;right:70px;top:50%;transform:translateY(-50%);text-align:center}
-      .l{display:inline-block;font-size:var(--fs);font-weight:900;color:#fff;line-height:1.3;
-         text-shadow:${ring(6)}}`,
-    label: `.wrap{position:absolute;left:44px;top:${Math.round(H * 0.075)}px}
-      .l{display:inline-block;font-size:var(--fs);font-weight:700;color:#fff;background:rgba(0,0,0,.6);
-         padding:6px 16px;border-radius:10px;line-height:1.3}`,
-  };
-  const st = styles[item.style] || styles.sub;
-  return `<!doctype html><html><head><meta charset="utf-8"><style>${fontCss}
-    html,body{margin:0;width:${W}px;height:${H}px;background:transparent;overflow:hidden}
-    *{font-family:${FONT_STACK};word-break:keep-all}
-    ${st}</style></head>
-    <body><div class="wrap" style="--fs:${item.fontSize}px">${lines}</div></body></html>`;
-}
-
-const BASE_FS = { sub: 66, hook: 86, card: 80, label: 34 };
-const MAX_TEXT_W = { sub: W - 140, hook: W - 120, card: W - 140, label: W - 88 };
-
+// ---------- 크롬으로 자막 PNG 렌더링 (타이포 스타일은 reels_style.js) ----------
 // 한 줄이 화면을 넘지 않도록 글자 크기 자동 축소 (실측 기반)
 async function renderOverlays(items, outDir) {
   const { chromium } = require('playwright');
+  const S = require('./reels_style');
   ensureDir(outDir);
   const launchOpts = process.env.REELS_CHROMIUM ? { executablePath: process.env.REELS_CHROMIUM } : {};
   const browser = await chromium.launch(launchOpts);
-  const fontCss = customFontCss();
+  const fontCss = S.customFontCss(ROOT);
   const results = [];
   try {
     const page = await browser.newPage({ viewport: { width: W, height: H } });
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
-      let fs0 = it.fontSize || BASE_FS[it.style] || 66;
-      for (let tries = 0; tries < 8; tries++) {
-        await page.setContent(overlayHtml({ ...it, fontSize: fs0 }, fontCss));
+      const base = S.baseFontSize(it);
+      const maxW = S.maxTextWidth(it.kind);
+      // 같은 글의 단계별 등장(reveal)은 완성본과 같은 크기를 써야 글자가 흔들리지 않는다
+      let fs0 = it.sameSizeAs !== undefined ? results[it.sameSizeAs].fontSize : base;
+      for (let tries = 0; it.sameSizeAs === undefined && tries < 8; tries++) {
+        await page.setContent(S.overlayHtml({ ...it, reveal: Infinity, fontSize: fs0 }, fontCss));
         await page.evaluate(() => document.fonts.ready);
         const widest = await page.evaluate(() =>
-          Math.max(...[...document.querySelectorAll('.l')].map((e) => e.getBoundingClientRect().width))
+          Math.max(...[...document.querySelectorAll('.l,.ref')].map((e) => e.getBoundingClientRect().width))
         );
-        if (widest <= MAX_TEXT_W[it.style] + 1 || fs0 <= 36) break;
-        fs0 = Math.floor(fs0 * Math.min(0.95, MAX_TEXT_W[it.style] / widest));
+        if (widest <= maxW + 1 || fs0 <= 32) break;
+        fs0 = Math.floor(fs0 * Math.min(0.95, maxW / widest));
       }
-      const file = path.join(outDir, `ov-${String(i).padStart(2, '0')}.png`);
+      await page.setContent(S.overlayHtml({ ...it, fontSize: fs0 }, fontCss));
+      await page.evaluate(() => document.fonts.ready);
+      const file = path.join(outDir, `ov-${String(i).padStart(3, '0')}.png`);
       await page.screenshot({ path: file, omitBackground: true });
-      results.push({ ...it, fontSize: fs0, png: file });
+      results.push({ ...it, fontSize: fs0, baseFontSize: base, png: file });
     }
   } finally {
     await browser.close();

@@ -1,6 +1,6 @@
 ---
-description: 사진·촬영 영상 + 한줄 메모로 릴스/쇼츠 스토리보드 작성 → 승인 후 세로 영상(자막·배경음악) 렌더링
-argument-hint: "주제, 협찬 여부, 원하는 분위기 (예: 다이소 배수구 클리너, 내돈내산, 2주 써보니 냄새 끝) | --job <작업ID>"
+description: 사진·촬영 영상 + 한줄 메모로 릴스/쇼츠(살림템·설교·정보) 스토리보드 작성 → 승인 후 필터·타이포 자막·배경음악 세로 영상 렌더링
+argument-hint: "[설교|정보|살림] 주제, 협찬 여부, 분위기 (예: 설교 마태복음 11:28 쉼) | --job <작업ID>"
 ---
 
 입력: $ARGUMENTS
@@ -10,13 +10,14 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 
 ## 0. 모드 판단
 - 입력이 `--job <ID>` 로 시작하면 **스튜디오 모드** (핸드폰 웹앱에서 호출, 비대화형): 질문할 수 없다.
-  - 작업 폴더 `drafts/reels/<ID>/`, 정보는 `job.json` (mode·topic·memo·sponsor·sponsorBrand·sponsorText), 자료는 `media/`.
+  - 작업 폴더 `drafts/reels/<ID>/`, 정보는 `job.json` (template·mode·topic·memo·sponsor·sponsorBrand·sponsorText), 자료는 `media/`.
   - 결과물은 `storyboard.json` + `review.md` 만 쓰고 **렌더링은 하지 않는다** (사용자가 앱에서 자막을 고치고 "영상 만들기"를 누르는 것이 승인).
   - 확인 안 된 사실은 넣지 말고 `review.md`의 "확인 필요"에 적는다.
+- **분야(template)**: 스튜디오는 job.json의 `template`(salim / sermon / info / basic). 채팅 모드는 입력의 "설교·말씀"→sermon, "정보·방법·팁·○가지"→info, 살림템 후기→salim, 그 외 basic. 애매하면 묻는다.
 - 그 외는 **채팅 모드**: 자료는 `input/photos/`(`_mosaic/` 제외)·`input/videos/`. 작업 폴더는 `drafts/reels/YYYYMMDD-HHMMSS-슬러그/` 를 새로 만든다.
 
 ## 1. 자료 읽기
-- `data/reels-guide.md`, `data/blogger-profile.md`, `data/profile.md`, `data/trends.md`, `data/sponsored-disclosure.md` 를 읽는다.
+- `data/reels-guide.md`(공통 + 살림템), 분야별 공식(sermon → `data/reels-templates/sermon.md`, info → `data/reels-templates/info.md`), `data/blogger-profile.md`, `data/profile.md`, `data/trends.md`, `data/sponsored-disclosure.md` 를 읽는다.
 - 사진은 **전부 Read로 직접 열어** 본다 (제품명·패키지 문구·가격표·사용 장면·전후 상태).
 - 영상은 볼 수 없으므로 먼저 미리보기 시트를 만든다:
   `node scripts/reels_frames.js <영상 또는 폴더> --out drafts/reels/<ID>/frames`
@@ -39,6 +40,9 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 ```json
 {
   "version": 1,
+  "template": "salim",
+  "look": null, "textStyle": null, "textAnim": null, "hookStyle": null,
+  "titleBar": null,
   "title": "내부용 제목",
   "mode": "photo",
   "mainKeyword": "다이소 배수구 클리너",
@@ -53,7 +57,8 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
     { "type": "video", "path": "drafts/reels/<ID>/media/b.mp4", "in": 3.0, "out": 6.5, "speed": 1, "audio": true, "text": "끼우기만 하면 끝",
       "blur": [{ "x": 0.62, "y": 0.1, "w": 0.2, "h": 0.15, "reason": "아이 얼굴" }] },
     { "type": "image", "path": "...", "duration": 2.4, "subs": [{ "text": "단점도 있어요", "start": 0, "end": 1.2 }, { "text": "2주마다 교체", "start": 1.2 }] },
-    { "type": "card", "duration": 2, "text": "필요할 때 보게\n저장해 두세요", "background": "#111111" }
+    { "type": "card", "duration": 4.5, "image": "drafts/reels/<ID>/media/c.jpg", "text": "구절 첫 줄\n*핵심 구절*", "ref": "마태복음 11:28 (개역개정)" },
+    { "type": "card", "duration": 2, "text": "필요할 때 보게\n*저장*해 두세요", "background": "#111111" }
   ],
   "thumbnailAt": 0.6,
   "captions": {
@@ -64,6 +69,11 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
   }
 }
 ```
+- 스타일: `look`(필터)·`textStyle`(자막)·`textAnim`(효과)·`hookStyle`은 **null이면 분야 기본값**. 바꿀 이유가 있을 때만 지정.
+  컷별로 `look`·`textStyle`·`textAnim`을 덮어쓸 수 있다 (예: 노을 사진만 `golden`, 마지막 단계만 `marker`). 값 목록은 `data/reels-guide.md` "스타일".
+- 자막·후킹·제목에서 `*단어*` = 강조 색. 한 자막에 강조 1곳(많아야 2곳).
+- `card`: `image`(흐리고 어둡게 깔리는 배경 사진) 또는 `background`(#색). `ref` = 작은 출처 줄(성경 장절·교회명 등, 사용자가 준 것만).
+- `titleBar`: `{ "text": "배수구 냄새 없애는 법 *3가지*" }` — 정보 릴스에서 영상 내내 상단 고정.
 - 경로는 저장소 루트 기준. `motion`: zoom-in / zoom-out / pan-left / pan-right / pan-up / pan-down / none (생략 시 자동 교차).
 - `fit`은 보통 생략(자동). 세로 사진의 위·아래가 잘리면 안 되면 `"fit": "contain"`.
 - 영상 원본 소리에 말소리가 있으면 `"audio": true` (배경음악이 자동으로 줄어든다). 잡음뿐이면 `false`.
@@ -72,7 +82,8 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 
 ## 5. 검수 보고
 `drafts/reels/<ID>/review.md`에 쓰고(스튜디오 모드), 채팅 모드는 채팅으로도 보여준다:
-- 예상 길이 / 컷 수 / 후킹 문구와 패턴 / 페르소나 / 메인 키워드
+- 분야 / 필터·자막 스타일·효과 / 예상 길이 / 컷 수 / 후킹 문구와 패턴 / 페르소나 / 메인 키워드
+- (설교) 인용 구절이 사용자가 준 본문과 글자 그대로 같은지 대조 결과
 - 컷표: `#번호 | 자료 | 구간·길이 | 자막`
 - 협찬 표기 (라벨 + 게시 문구 첫 줄) 또는 "내돈내산"
 - 모자이크 내역 (몇 컷·몇 곳·사유) — 없으면 "발견 없음"

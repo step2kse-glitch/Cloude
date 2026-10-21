@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
 const R = require('./lib/reels');
+const S = require('./lib/reels_style');
 
 const { W, H, FPS, abs, rel } = R;
 const args = process.argv.slice(2);
@@ -25,6 +26,10 @@ function validate(sb) {
   (sb.cuts || []).forEach((c, i) => {
     const n = `컷#${i + 1}`;
     if (!['image', 'video', 'card'].includes(c.type)) errors.push(`${n}: type은 image/video/card 중 하나`);
+    if (c.type === 'card' && c.image && !fs.existsSync(abs(c.image))) errors.push(`${n}: 카드 배경 사진 없음 ${c.image}`);
+    if (c.look && !S.LOOKS[c.look]) errors.push(`${n}: look(필터)은 ${Object.keys(S.LOOKS).join('/')} 중 하나`);
+    if (c.textStyle && !S.TEXT_STYLES[c.textStyle]) errors.push(`${n}: textStyle은 ${Object.keys(S.TEXT_STYLES).join('/')} 중 하나`);
+    if (c.textAnim && !S.TEXT_ANIMS[c.textAnim]) errors.push(`${n}: textAnim은 ${Object.keys(S.TEXT_ANIMS).join('/')} 중 하나`);
     if (c.type !== 'card') {
       if (!c.path) errors.push(`${n}: path 없음`);
       else if (!fs.existsSync(abs(c.path))) errors.push(`${n}: 파일 없음 ${c.path}`);
@@ -44,9 +49,17 @@ function validate(sb) {
       const m = path.join(R.ROOT, 'input', 'photos', '_mosaic', path.basename(c.path));
       if (fs.existsSync(m)) warns.push(`${n}: 모자이크 처리본이 있는데 원본을 쓰고 있음 → ${rel(m)}`);
     }
-    for (const t of textsOf(c)) checkText(t, `${n} 자막`, warns);
+    for (const t of textsOf(c)) checkText(t, `${n} 자막`, warns, c.type === 'card' ? 18 : 16, c.type === 'card' ? 4 : 2);
   });
   if (sb.hook && sb.hook.text) checkText(sb.hook.text, '후킹 제목', warns, 12);
+  if (sb.titleBar && sb.titleBar.text) checkText(sb.titleBar.text, '상단 제목', warns, 18);
+  if (sb.template && !S.TEMPLATES[sb.template]) errors.push(`template은 ${Object.keys(S.TEMPLATES).join('/')} 중 하나`);
+  if (sb.look && !S.LOOKS[sb.look]) errors.push(`look(필터)은 ${Object.keys(S.LOOKS).join('/')} 중 하나`);
+  if (sb.textStyle && !S.TEXT_STYLES[sb.textStyle]) errors.push(`textStyle은 ${Object.keys(S.TEXT_STYLES).join('/')} 중 하나`);
+  if (sb.textAnim && !S.TEXT_ANIMS[sb.textAnim]) errors.push(`textAnim은 ${Object.keys(S.TEXT_ANIMS).join('/')} 중 하나`);
+  if (sb.hookStyle && !S.HOOK_STYLES[sb.hookStyle]) errors.push(`hookStyle은 ${Object.keys(S.HOOK_STYLES).join('/')} 중 하나`);
+  const stars = [sb.hook && sb.hook.text, ...(sb.cuts || []).flatMap(textsOf)].filter((t) => t && (String(t).match(/\*/g) || []).length % 2);
+  for (const t of stars) warns.push(`강조 표시 *짝이 안 맞음: "${t}"`);
   if (sb.sponsored) {
     if (!sb.disclosure || !String(sb.disclosure).trim()) errors.push('협찬 영상인데 disclosure(예: "광고 · 제품 제공")가 없습니다.');
     const all = [sb.hook && sb.hook.text, ...(sb.cuts || []).flatMap(textsOf), JSON.stringify(sb.captions || {})].join('\n');
@@ -61,9 +74,9 @@ function textsOf(c) {
   return c.text ? [c.text] : [];
 }
 
-function checkText(t, where, warns, maxLine = 16) {
-  const lines = String(t).split('\n');
-  if (lines.length > 2) warns.push(`${where}: ${lines.length}줄 — 2줄 이하 권장`);
+function checkText(t, where, warns, maxLine = 16, maxLines = 2) {
+  const lines = S.plain(t).split('\n');
+  if (lines.length > maxLines) warns.push(`${where}: ${lines.length}줄 — ${maxLines}줄 이하 권장`);
   for (const l of lines) if ([...l].length > maxLine) warns.push(`${where}: "${l}" ${[...l].length}자 — 한 줄 ${maxLine}자 이하 권장`);
 }
 
@@ -83,6 +96,7 @@ function planCuts(sb) {
     } else {
       dur = Number(c.duration);
       if (c.type === 'image') info = R.probe(c.path);
+      if (c.type === 'card' && c.image) info = R.probe(c.image);
     }
     dur = Math.max(1 / FPS, Math.round(dur * FPS) / FPS); // 프레임 단위로 맞춰 누적 오차 방지
     const p = { ...c, index: i, start: r2(t), dur: r2(dur), info };
@@ -92,10 +106,16 @@ function planCuts(sb) {
 }
 
 // ---------- 사진 → 작업 캔버스(2배 해상도, 모자이크 반영) ----------
-async function imageCanvas(cut, outFile) {
+async function imageCanvas(cut, outFile, { background = false } = {}) {
   const CW = W * 2;
   const CH = H * 2;
-  const { data: base, info } = await sharp(abs(cut.path)).rotate().toBuffer({ resolveWithObject: true });
+  const { data: base, info } = await sharp(abs(background ? cut.image : cut.path)).rotate().toBuffer({ resolveWithObject: true });
+  if (background) {
+    // 말씀 카드 배경: 꽉 채우고 크게 흐리고 어둡게 → 글자가 주인공
+    await sharp(base).resize(Math.round(CW / 6), Math.round(CH / 6), { fit: 'cover' }).blur(5)
+      .modulate({ brightness: 0.5 }).resize(CW, CH).png().toFile(outFile);
+    return 'cover';
+  }
   const comps = [];
   for (const r of cut.blur || []) {
     const pad = 0.15;
@@ -156,7 +176,7 @@ function zoompanExpr(motion, N) {
 const ENC = () => ['-c:v', 'libx264', '-preset', FAST ? 'ultrafast' : 'veryfast', '-crf', FAST ? '26' : '17', '-pix_fmt', 'yuv420p', '-r', String(FPS)];
 const AENC = ['-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2'];
 
-async function renderSegment(cut, build, autoMotion) {
+async function renderSegment(cut, build, autoMotion, st) {
   const out = path.join(build, `seg-${String(cut.index).padStart(2, '0')}.mp4`);
   const N = Math.round(cut.dur * FPS);
   const silence = ['-f', 'lavfi', '-t', String(cut.dur), '-i', 'anullsrc=r=48000:cl=stereo'];
@@ -167,14 +187,25 @@ async function renderSegment(cut, build, autoMotion) {
     const motion = cut.motion || autoMotion;
     await R.runFfmpeg([
       '-i', canvas, ...silence,
-      '-filter_complex', `[0:v]zoompan=${zoompanExpr(motion, N)}:d=${N}:s=${W}x${H}:fps=${FPS},setsar=1,format=yuv420p[v]`,
+      '-filter_complex', `[0:v]zoompan=${zoompanExpr(motion, N)}:d=${N}:s=${W}x${H}:fps=${FPS}[z];${S.lookChain(st.look, 'z', 'lk', 'L')};[lk]setsar=1,format=yuv420p[v]`,
       '-map', '[v]', '-map', '1:a', '-frames:v', String(N), '-t', String(cut.dur), ...ENC(), ...AENC, out,
     ]);
-    return { out, note: `사진 ${fit === 'cover' ? '꽉채움' : '흐린배경'} · ${motion}` };
+    return { out, note: `사진 ${fit === 'cover' ? '꽉채움' : '흐린배경'} · ${motion} · 필터 ${S.LOOKS[st.look].label}` };
+  }
+
+  if (cut.type === 'card' && cut.image) {
+    const canvas = path.join(build, `canvas-${cut.index}.png`);
+    await imageCanvas(cut, canvas, { background: true });
+    await R.runFfmpeg([
+      '-i', canvas, ...silence,
+      '-filter_complex', `[0:v]zoompan=${zoompanExpr('zoom-in', N)}:d=${N}:s=${W}x${H}:fps=${FPS}[z];${S.lookChain(st.look, 'z', 'lk', 'L')};[lk]setsar=1,format=yuv420p[v]`,
+      '-map', '[v]', '-map', '1:a', '-frames:v', String(N), '-t', String(cut.dur), ...ENC(), ...AENC, out,
+    ]);
+    return { out, note: `글자 카드 (사진 배경) · 필터 ${S.LOOKS[st.look].label}` };
   }
 
   if (cut.type === 'card') {
-    const bg = /^#[0-9a-f]{6}$/i.test(cut.background || '') ? cut.background : '#111111';
+    const bg = /^#[0-9a-f]{6}$/i.test(cut.background || '') ? cut.background : st.cardBackground;
     await R.runFfmpeg([
       '-f', 'lavfi', '-i', `color=c=${bg}:s=${W}x${H}:r=${FPS}:d=${cut.dur}`, ...silence,
       '-map', '0:v', '-map', '1:a', '-frames:v', String(N), '-t', String(cut.dur), ...ENC(), ...AENC, out,
@@ -208,7 +239,8 @@ async function renderSegment(cut, build, autoMotion) {
         `[fb]scale=${W}:${H}:force_original_aspect_ratio=decrease[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2[fit]`
     );
   }
-  parts.push(`[fit]setpts=(PTS-STARTPTS)/${cut.speed},fps=${FPS},setsar=1,format=yuv420p[v]`);
+  parts.push(S.lookChain(st.look, 'fit', 'lk', 'L'));
+  parts.push(`[lk]setpts=(PTS-STARTPTS)/${cut.speed},fps=${FPS},setsar=1,format=yuv420p[v]`);
   let chain = parts.join(';');
 
   const useAudio = info.hasAudio && cut.audio !== false;
@@ -223,27 +255,54 @@ async function renderSegment(cut, build, autoMotion) {
     ...inputs, '-filter_complex', chain,
     '-map', '[v]', '-map', useAudio ? '[a]' : '1:a', '-frames:v', String(N), '-t', String(cut.dur), ...ENC(), ...AENC, out,
   ]);
-  return { out, note: `영상 ${cut.in.toFixed(1)}~${cut.out.toFixed(1)}초${cut.speed !== 1 ? ` ×${cut.speed}` : ''} · ${fit === 'cover' ? '꽉채움' : '흐린배경'} · 소리 ${useAudio ? '원본' : '없음'}`, useAudio };
+  return { out, note: `영상 ${cut.in.toFixed(1)}~${cut.out.toFixed(1)}초${cut.speed !== 1 ? ` ×${cut.speed}` : ''} · ${fit === 'cover' ? '꽉채움' : '흐린배경'} · 소리 ${useAudio ? '원본' : '없음'} · 필터 ${S.LOOKS[st.look].label}`, useAudio };
 }
 
 // ---------- 자막 타임라인 ----------
+// 항목: { kind: label|hook|title|sub|card, style, hookStyle, anim, text, ref, start, end, reveal?, sameSizeAs? }
 function overlayItems(sb, cuts, total) {
-  const items = [];
-  if (sb.sponsored) items.push({ style: 'label', text: sb.disclosure, start: 0, end: total });
-  if (sb.hook && sb.hook.text) {
-    items.push({ style: 'hook', text: sb.hook.text, start: Number(sb.hook.start || 0), end: Math.min(total, Number(sb.hook.end || 2.5)) });
+  const g = S.resolveStyle(sb);
+  const raw = [];
+  if (sb.sponsored) raw.push({ kind: 'label', text: sb.disclosure, start: 0, end: total, anim: 'none' });
+  const hookEnd = sb.hook && sb.hook.text ? Math.min(total, Number(sb.hook.end || 2.5)) : 0;
+  if (hookEnd) {
+    raw.push({ kind: 'hook', hookStyle: g.hookStyle, text: sb.hook.text, start: Number(sb.hook.start || 0), end: hookEnd, anim: g.textAnim === 'none' ? 'none' : 'slide' });
+  }
+  if (sb.titleBar && sb.titleBar.text) {
+    const st = sb.titleBar.start !== undefined ? Number(sb.titleBar.start) : hookEnd;
+    const en = sb.titleBar.end !== undefined ? Number(sb.titleBar.end) : total;
+    raw.push({ kind: 'title', text: sb.titleBar.text, start: st, end: Math.min(total, en), anim: 'fade' });
   }
   for (const c of cuts) {
-    const style = c.type === 'card' ? 'card' : 'sub';
+    const st = S.resolveStyle(sb, c);
+    const kind = c.type === 'card' ? 'card' : 'sub';
+    const base = { kind, style: st.textStyle, anim: st.textAnim };
+    const cutEnd = c.start + c.dur;
     if (Array.isArray(c.subs) && c.subs.length) {
-      for (const s of c.subs) {
-        items.push({ style, text: s.text, start: r2(c.start + Number(s.start || 0)), end: r2(Math.min(c.start + c.dur, c.start + Number(s.end ?? c.dur))) });
+      for (const x of c.subs) {
+        raw.push({ ...base, text: x.text, ref: x.ref, start: r2(c.start + Number(x.start || 0)), end: r2(Math.min(cutEnd, c.start + Number(x.end ?? c.dur))) });
       }
     } else if (c.text) {
-      items.push({ style, text: c.text, start: c.start, end: r2(c.start + c.dur) });
+      raw.push({ ...base, text: c.text, ref: c.ref, start: c.start, end: r2(cutEnd) });
     }
   }
-  return items.filter((i) => String(i.text || '').trim() && i.end > i.start);
+  const items = [];
+  for (const it of raw.filter((i) => String(i.text || '').trim() && i.end > i.start)) {
+    const n = S.wordCount(it.text);
+    // 한 단어씩: 앞부분 60% 동안 단어를 차례로 드러냄. 단어가 너무 많으면 스르륵으로 대체
+    if (it.anim === 'words' && n > 1 && n <= 14) {
+      const step = Math.max(0.08, Math.min(0.35, ((it.end - it.start) * 0.6) / n));
+      const fullIdx = items.length + n - 1;
+      for (let k = 1; k <= n; k++) {
+        const s0 = r2(it.start + (k - 1) * step);
+        const e0 = k === n ? it.end : r2(it.start + k * step);
+        items.push({ ...it, anim: k === 1 ? 'pop' : 'none', reveal: k, start: s0, end: e0, ...(k < n ? { sameSizeAs: undefined, _full: fullIdx } : {}) });
+      }
+    } else {
+      items.push({ ...it, anim: it.anim === 'words' ? 'fade' : it.anim });
+    }
+  }
+  return items;
 }
 
 // ---------- 게시 문구 ----------
@@ -310,12 +369,13 @@ function captionsText(sb) {
 
   // 1) 컷별 세그먼트
   const autoMotions = ['zoom-in', 'pan-left', 'zoom-out', 'pan-right'];
+  const gst = S.resolveStyle(sb);
   const notes = [];
   let anyAudio = false;
   for (const c of cuts) {
     setJob({ progress: `컷 ${c.index + 1}/${cuts.length} 만드는 중` });
     process.stdout.write(`컷 ${c.index + 1}/${cuts.length}... `);
-    const r = await renderSegment(c, build, autoMotions[c.index % autoMotions.length]);
+    const r = await renderSegment(c, build, autoMotions[c.index % autoMotions.length], S.resolveStyle(sb, c));
     if (r.useAudio) anyAudio = true;
     c.seg = r.out;
     notes.push(`#${c.index + 1} ${c.start.toFixed(1)}~${(c.start + c.dur).toFixed(1)}초 ${r.note}`);
@@ -331,17 +391,38 @@ function captionsText(sb) {
   // 3) 자막 PNG (크롬 렌더링)
   setJob({ progress: '자막 만드는 중' });
   const items = overlayItems(sb, cuts, total);
-  const ovs = await R.renderOverlays(items, path.join(build, 'overlays'));
+  // 단어별 등장은 완성 문장과 같은 글자 크기여야 하므로 완성본을 먼저 렌더링하도록 순서를 맞춘다
+  const order = items.map((it, i) => i).sort((a, b) => (items[a]._full !== undefined) - (items[b]._full !== undefined));
+  const sorted = order.map((i) => items[i]);
+  const posOf = new Map(order.map((orig, pos) => [orig, pos]));
+  for (const it of sorted) if (it._full !== undefined) it.sameSizeAs = posOf.get(it._full);
+  const ovs = await R.renderOverlays(sorted, path.join(build, 'overlays'));
 
   // 4) 최종 합성: 자막 overlay + 배경음악(원본 소리 있으면 자동으로 줄임) + 음량 정규화
   setJob({ progress: '최종 합성 중' });
+  // 효과 없는 자막: 정지 PNG + enable 구간 / fade·slide·pop: 구간 길이만큼 반복 입력 + 알파 페이드 + 위치 이동
   const inputs = ['-i', body];
-  for (const o of ovs) inputs.push('-i', o.png);
+  for (const o of ovs) {
+    if (o.anim === 'none') inputs.push('-i', o.png);
+    else inputs.push('-loop', '1', '-framerate', String(FPS), '-t', String(r2(o.end - o.start)), '-i', o.png);
+  }
   const fc = [];
   let v = '0:v';
   ovs.forEach((o, i) => {
     const nv = `v${i}`;
-    fc.push(`[${v}][${i + 1}:v]overlay=0:0:enable='between(t,${o.start},${Math.max(o.start, o.end - 0.001)})'[${nv}]`);
+    if (o.anim === 'none') {
+      fc.push(`[${v}][${i + 1}:v]overlay=0:0:enable='between(t,${o.start},${Math.max(o.start, o.end - 0.001)})'[${nv}]`);
+    } else {
+      const d = r2(o.end - o.start);
+      const fin = Math.min(o.anim === 'pop' ? 0.12 : 0.28, d / 3);
+      const fout = o.anim === 'pop' ? 0 : Math.min(0.15, d / 4);
+      let f = `[${i + 1}:v]format=rgba,fade=t=in:st=0:d=${fin}:alpha=1`;
+      if (fout > 0) f += `,fade=t=out:st=${r2(d - fout)}:d=${fout}:alpha=1`;
+      f += `,setpts=PTS-STARTPTS+${o.start}/TB[o${i}]`;
+      fc.push(f);
+      const y = o.anim === 'slide' ? `'if(lt(t-${o.start},0.3),40*(1-(t-${o.start})/0.3),0)'` : '0';
+      fc.push(`[${v}][o${i}]overlay=x=0:y=${y}:eof_action=pass:eval=frame[${nv}]`);
+    }
     v = nv;
   });
   const fadeOut = Math.max(0, total - 0.35);
@@ -382,7 +463,7 @@ function captionsText(sb) {
   ok(Math.abs(out.duration - total) < 0.3, `길이 ${out.duration.toFixed(2)}초 (기대 ${total.toFixed(2)}초)`);
   ok(out.hasAudio, '오디오 트랙 있음');
   ok(ovs.length === items.length, `자막 ${ovs.length}/${items.length}개 렌더링`);
-  if (sb.sponsored) ok(ovs.some((o) => o.style === 'label'), `협찬 표기 "${sb.disclosure}" 화면 전체 구간 표시`);
+  if (sb.sponsored) ok(ovs.some((o) => o.kind === 'label'), `협찬 표기 "${sb.disclosure}" 화면 전체 구간 표시`);
 
   const checkTimes = cuts.map((c) => c.start + c.dur * 0.55);
   if (sb.hook && sb.hook.text) checkTimes.unshift(Math.min(0.6, total / 2));
@@ -395,12 +476,13 @@ function captionsText(sb) {
   warns.push(...cap.warns);
 
   const failed = check.some((l) => l.startsWith('❌'));
-  const shrunk = ovs.filter((o) => o.style !== 'label' && o.fontSize < ({ sub: 66, hook: 86, card: 80 }[o.style] || 66) * 0.8);
+  const shrunk = ovs.filter((o) => o.kind !== 'label' && o.sameSizeAs === undefined && o.fontSize < o.baseFontSize * 0.8);
   for (const o of shrunk) warns.push(`자막 "${o.text.replace(/\n/g, ' / ')}" 글자가 길어 ${o.fontSize}px로 줄어듦 — 문장을 줄이면 더 잘 보임`);
 
   const report = [
     `릴스 렌더링 결과 (${new Date().toLocaleString('ko-KR')}, ${((Date.now() - t0) / 1000).toFixed(0)}초 소요${FAST ? ', 빠른 미리보기 화질' : ''})`,
     `영상: ${rel(reel)} · ${total.toFixed(1)}초 · 컷 ${cuts.length}개 · 자막 ${items.length}개 · 배경음악 ${bgm ? path.basename(bgm.path) : '없음'}`,
+    `스타일: ${S.TEMPLATES[gst.template].label} · 필터 ${S.LOOKS[gst.look].label} · 자막 ${S.TEXT_STYLES[gst.textStyle]} · 효과 ${S.TEXT_ANIMS[gst.textAnim]} · 후킹 ${S.HOOK_STYLES[gst.hookStyle]}`,
     '',
     '[컷 구성]',
     ...notes,
