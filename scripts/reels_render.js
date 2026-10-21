@@ -389,7 +389,9 @@ function captionsText(sb) {
         warns.push(`컷#${i + 1}: 나레이션 ${v.duration.toFixed(1)}초에 맞춰 ${c.duration || 0}초 → ${need}초로 늘림`);
         c.duration = need;
       }
-      if (!c.text && !(Array.isArray(c.subs) && c.subs.length) && sb.narrationSubtitles !== false) {
+      // text가 ""(빈 문자열)이면 '자막 없음' 의도 → 자동 자막도 만들지 않는다 (후킹과 겹치는 첫 컷 등)
+      const autoSubs = (c.text === undefined || c.text === null) && !(Array.isArray(c.subs) && c.subs.length) && sb.narrationSubtitles !== false;
+      if (autoSubs) {
         c.subs = V.chunkSubtitles(c.narration, DELAY, v.duration);
       }
       narrs.push({ cut: i, file: v.file, duration: v.duration, delay: DELAY });

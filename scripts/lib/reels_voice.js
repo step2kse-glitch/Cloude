@@ -130,6 +130,14 @@ function chunkSubtitles(narration, start, duration, maxLine = 14) {
     }
     if (cur) pieces.push(cur);
   }
+  // "요즘,"처럼 너무 짧은 조각은 다음 조각에 붙인다
+  for (let i = 0; i < pieces.length - 1; i++) {
+    if ([...pieces[i].replace(/[\s*,.]/g, '')].length < 5) {
+      pieces[i + 1] = `${pieces[i]} ${pieces[i + 1]}`;
+      pieces.splice(i, 1);
+      i--;
+    }
+  }
   // 2줄로 나누기: 가운데에 가장 가까운 띄어쓰기
   const twoLines = (p) => {
     if ([...p.replace(/\*/g, '')].length <= maxLine) return p;
