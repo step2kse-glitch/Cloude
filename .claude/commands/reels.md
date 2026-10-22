@@ -93,6 +93,9 @@ CLAUDE.md의 절대 규칙(사실 지어내기 금지·협찬 표기·가족 사
 - 협찬: `sponsored: true`, `disclosure` = 짧은 라벨(reels-guide), `captions.instagram` 첫 줄 = sponsored-disclosure.md 문장.
 
 ## 5. 검수 보고
+먼저 숫자 사실 점검: `node scripts/fact_check.js drafts/reels/<ID>/storyboard.json` (스튜디오 모드는 job.json 메모를 자동으로 씀.
+채팅 모드는 `--memo "<메모 + 사용자 답변>"`, 붙여넣은 원고 파일은 `--source`).
+→ "자료에 없는 숫자"가 있으면 빼거나 고친다. 스튜디오 모드에서 남겨야 하면 review.md "확인 필요"에 그 숫자를 적는다. 결과 한 줄을 review.md 맨 위에.
 `drafts/reels/<ID>/review.md`에 쓰고(스튜디오 모드), 채팅 모드는 채팅으로도 보여준다:
 - 분야 / 필터·자막 스타일·효과 / 목표·예상 길이 / 컷 수 / 나레이션 글자 수(Fish Audio 크레딧) / 배경음악 / 후킹 문구와 패턴 / 페르소나 / 메인 키워드
 - (설교) 인용 구절이 사용자가 준 본문과 글자 그대로 같은지 대조 결과

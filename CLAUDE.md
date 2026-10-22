@@ -22,6 +22,7 @@ scripts/naver_login.js    로그인 1회 (사용자가 브라우저에서 직접
 scripts/naver_draft.js    초안 JSON → 임시저장 (글·사진·태그·지도·동영상·소제목 서식)
 scripts/mosaic.js         사진 개인정보 모자이크 (원본 보존)
 scripts/probe_selectors.js 셀렉터 진단용 DOM 덤프 (읽기 전용)
+scripts/fact_check.js     숫자 사실 점검 — 초안·스토리보드의 숫자가 자료(메모·프로필·원고)에 있는지 대조 ("자료에 없는 숫자 0개"가 통과)
 scripts/lib/common.js     공용 헬퍼 (브라우저 실행, 프레임, 발행 가드, 한글 입력)
 scripts/reels_render.js   릴스 스토리보드 → 1080x1920 mp4 + 자동 검증 + check.jpg + captions.txt
 scripts/reels_frames.js   영상 미리보기 시트 (Claude가 영상 장면·시간을 보기 위함, 읽기 전용)
@@ -51,6 +52,7 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
    `scripts/lib/common.js`의 `installPublishGuard`가 캡처 단계 리스너로 진짜 발행 버튼
    `button[data-testid="seOnePublishBtn"]` 클릭/Enter를 원천 차단한다. **어떤 경우에도 이 가드를 제거·우회하지 않는다.**
 3. **사실 지어내기 금지** — profile.md, blogger-profile.md, 사진, 사용자 메모에서 확인된 것만. 확인 안 된 정보는 묻는다.
+   검수 보고 전 `node scripts/fact_check.js`로 숫자를 대조해 "자료에 없는 숫자 0개"를 확인한다 (사진에서 읽은 숫자는 `--source`로 메모 파일에 적어 넘긴다).
 3-1. **협찬 처리(공정위 표시광고법 — 생략 불가)**: /write마다 협찬·체험단 여부를 확인(메모에 없으면 질문).
    협찬이면 `data/sponsored-disclosure.md`의 대가 유형별 문구를 **첫 블록(일반 text 블록, quote 아님)** 에 넣는다.
    업체 지정 문구가 있으면 그것이 우선. 협찬 글에 "내돈내산"·"광고 아님" 등 거짓 부인 표현 절대 금지.

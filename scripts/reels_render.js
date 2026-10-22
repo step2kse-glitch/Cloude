@@ -8,6 +8,7 @@ const sharp = require('sharp');
 const R = require('./lib/reels');
 const S = require('./lib/reels_style');
 const V = require('./lib/reels_voice');
+const FC = require('./fact_check');
 
 const { W, H, FPS, abs, rel } = R;
 const args = process.argv.slice(2);
@@ -567,6 +568,10 @@ function captionsText(sb) {
   fs.writeFileSync(path.join(outDir, 'captions.txt'), cap.text);
   warns.push(...cap.warns);
 
+  // 숫자 사실 점검 (자료 = job.json 메모·프로필). 경고만 — 승인은 이미 사용자가 했으므로 렌더는 막지 않는다
+  const facts = FC.factCheck(sb, FC.sourcesFor(sbPath));
+  const factLine = FC.report(facts);
+
   const failed = check.some((l) => l.startsWith('❌'));
   const shrunk = ovs.filter((o) => o.kind !== 'label' && o.sameSizeAs === undefined && o.fontSize < o.baseFontSize * 0.8);
   for (const o of shrunk) warns.push(`자막 "${o.text.replace(/\n/g, ' / ')}" 글자가 길어 ${o.fontSize}px로 줄어듦 — 문장을 줄이면 더 잘 보임`);
@@ -582,6 +587,9 @@ function captionsText(sb) {
     '',
     '[자동 검증]',
     ...check,
+    '',
+    '[사실 점검]',
+    factLine,
     '',
     '[주의]',
     ...(warns.length ? warns.map((w) => `⚠️ ${w}`) : ['없음']),
