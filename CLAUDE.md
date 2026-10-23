@@ -34,7 +34,9 @@ scripts/reels_env.js      /reels 사전 점검 (나레이션 준비·배경음�
 scripts/reels_fonts.js    자막 폰트(Pretendard·고운바탕, OFL) 내려받기 → assets/fonts/ (git 제외)
 data/voice.local.json     Fish Audio 키·목소리 ID (git 제외, 절대 커밋·출력 금지)
 data/reels-templates/     분야별 릴스 공식 (sermon.md 설교·말씀, info.md 정보)
-studio/index.html         스튜디오 화면 (내 영상 / 만들기 / 게시·예약 / 설정)
+studio/index.html         스튜디오 화면 (오피스 / 내 영상 / 만들기 / 게시·예약 / 설정)
+studio/office.js          AI 오피스 화면 (아이소메트릭 사무실 SVG, 직원 상태, 보고함·결재함·실시간·비서 브리핑, 업무 지시)
+scripts/lib/office.js     오피스 서버 로직: 직원=실제 도구(/write·/reels·렌더러·fact_check·모자이크·비서), 업무 저장 drafts/office/tasks/
 drafts/reels/<ID>/        릴스 작업 폴더 (job.json, media/, storyboard.json, review.md, reel.mp4 …)
 input/bgm/                배경음악 (저작권 프리 음원만)
 data/                     profile / blogger-profile / authority-lines / photo-guide /
@@ -215,6 +217,13 @@ naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지,
 - 나레이션은 컷 시작+0.15초에 `adelay`로 배치 → 원본 소리와 amix → 이 트랙으로 배경음악 sidechain 덕킹.
 - 배경음악이 영상보다 짧으면 같은 파일을 여러 번 입력해 `acrossfade`(2초)로 잇는다. 아주 짧은 곡(6초 미만)만 stream_loop.
 - 명조 자막은 `body`에 고딕을 주고 `.l`에서 명조로 바꾼다 (`*{font-family}`로 주면 자식 span이 고딕으로 덮여 명조가 안 나옴).
+
+## AI 오피스 (스튜디오 첫 탭)
+
+- 직원은 실제 도구다: 블로그 작가(`/write --office`, 비대화형) · 릴스 PD(`/reels --job`) · 영상 편집자(렌더러) · 사실 검수관(fact_check) · 개인정보 지킴이(blur 현황) · 비서(읽기 전용 `claude -p`, Read·Glob·Grep만).
+- **결재 = 사용자 승인.** 블로그 초안의 네이버 임시저장은 결재함 "승인" 클릭 때만 `naver_draft.js` 실행 (절대 규칙 6 유지). `/write --office`는 임시저장을 직접 실행하지 않는다.
+- 비서 브리핑은 AI 없이 파일만 계산 (요금 없음). "오늘 AI 작업 n건"은 실제 업무 수 — 구독 사용량(%)은 알 수 없으므로 표시하지 않는다.
+- 비대화형 화면 전환 경쟁: 각 화면은 첫 await 뒤 `location.hash`가 바뀌었으면 그리지 않는다 (느린 이전 화면이 새 화면을 덮어쓰던 문제).
 
 ## 버그 해결 기록
 

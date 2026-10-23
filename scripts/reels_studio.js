@@ -11,6 +11,7 @@ const { spawn, spawnSync } = require('child_process');
 const R = require('./lib/reels');
 const ST = require('./lib/reels_style');
 const VO = require('./lib/reels_voice');
+const OF = require('./lib/office');
 
 const PORT = Number(process.env.REELS_PORT || 4321);
 const UI = path.join(R.ROOT, 'studio', 'index.html');
@@ -295,6 +296,7 @@ async function handle(req, res) {
   }
 
   if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(req, res, UI);
+  if (req.method === 'GET' && p === '/office.js') return serveFile(req, res, path.join(R.ROOT, 'studio', 'office.js'));
 
   // 작업 폴더 파일
   let m = /^\/f\/([\w가-힣.-]+)\/(.+)$/.exec(p);
@@ -351,6 +353,30 @@ async function handle(req, res) {
     }
   }
   if (p === '/api/jobs' && req.method === 'GET') return send(res, 200, listJobs());
+
+  // ---------- AI 오피스 ----------
+  if (p === '/api/office' && req.method === 'GET') return send(res, 200, OF.state(listJobs));
+  if (p === '/api/office/briefing' && req.method === 'GET') return send(res, 200, { text: OF.briefing(listJobs) });
+  if (p === '/api/office/tasks' && req.method === 'POST') {
+    const b = await readJsonBody(req);
+    if (!claudeCli()) return fail(res, 500, 'Claude Code(claude 명령)를 찾을 수 없어요. 설정 탭을 확인하세요.');
+    try {
+      return send(res, 200, OF.assign(String(b.employee || ''), b.instruction));
+    } catch (e) {
+      return fail(res, 400, e.message);
+    }
+  }
+  {
+    const om = /^\/api\/office\/tasks\/([\w-]+)\/(approve|reject|read|cancel)$/.exec(p);
+    if (om && req.method === 'POST') {
+      try {
+        const fn = { approve: OF.approve, reject: OF.reject, read: OF.markRead, cancel: OF.cancel }[om[2]];
+        return send(res, 200, fn(om[1]) || { ok: true });
+      } catch (e) {
+        return fail(res, 400, e.message);
+      }
+    }
+  }
 
   if (p === '/api/jobs' && req.method === 'POST') {
     const b = await readJsonBody(req);
@@ -500,6 +526,8 @@ function saveUpload(req, res, dest) {
   });
   req.on('error', () => fs.rmSync(tmp, { force: true }));
 }
+
+OF.recoverInterrupted();
 
 // 스튜디오가 꺼지면서 끊긴 작업은 '확인 필요'로 표시 (자식 프로세스도 같이 종료되므로)
 for (const j of listJobs()) {

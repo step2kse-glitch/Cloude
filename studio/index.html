@@ -91,7 +91,7 @@ img.sheet{width:100%;border-radius:12px}
 .err{background:#FBE5E2;color:#7c241a;border-radius:16px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.5}
 .muted{color:var(--sub)}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:10}
-nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+nav.tabs .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-radius:20px;color:#55544e;text-decoration:none;font-size:13px;font-weight:700}
 nav.tabs a.on{background:var(--y2);color:var(--ink)}
 nav.tabs svg{width:26px;height:26px}
@@ -102,12 +102,14 @@ nav.tabs svg{width:26px;height:26px}
 <header class="top"><div class="wrap"><div class="brand">나만의 작업실</div><div class="conn"><span class="dot" id="dot"></span><span id="connText">확인 중</span></div></div></header>
 <main class="wrap" id="view"></main>
 <nav class="tabs"><div class="in">
+  <a href="#office" data-tab="office"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V5l8-3 8 3v16"/><path d="M9 21v-4h6v4M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01"/></svg>오피스</a>
   <a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 3v18M3 12h18"/></svg>내 영상</a>
   <a href="#create" data-tab="create"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>만들기</a>
   <a href="#post" data-tab="post"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>게시·예약</a>
   <a href="#settings" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><path d="M10 7h11"/><circle cx="17" cy="17" r="3"/><path d="M3 17h11"/></svg>설정</a>
 </div></nav>
 <div class="toast" id="toast"></div>
+<script src="/office.js"></script>
 <script>
 const $ = (s, el = document) => el.querySelector(s);
 const view = $('#view');
@@ -142,7 +144,9 @@ async function ping() {
 
 // ---------------- 내 영상 ----------------
 async function home() {
+  const at = location.hash;
   const jobs = await api('/api/jobs');
+  if (location.hash !== at) return;
   const busy = jobs.filter((j) => ['storyboarding', 'storyboard', 'rendering', 'uploaded'].includes(j.status)).length;
   view.innerHTML = `
     <div class="row"><div><div class="eyebrow">나만의 콘텐츠 작업실</div><h1>내 영상<i>.</i></h1></div>
@@ -263,8 +267,10 @@ async function submitCreate() {
 // ---------------- 작업 상세 ----------------
 let cur = null;
 async function jobView(id) {
+  const at = location.hash;
   await styles();
   const d = await api(`/api/jobs/${id}`);
+  if (location.hash !== at) return;
   cur = d;
   const j = d.job; const st = statusOf(j); const busy = ['storyboarding', 'rendering'].includes(j.status);
   let body = '';
@@ -403,7 +409,9 @@ async function bindJob(d) {
 // ---------------- 게시·예약 ----------------
 const CHECKS = { disclosure: '협찬 표기·유료 광고 라벨 확인 (협찬 영상)', privacy: '아이 얼굴·송장·동호수가 안 보이는지 확인', typo: '자막 오타·잘림 확인', time: '올릴 시간대 확인 (오전 9~11시 / 밤 9~11시)' };
 async function post() {
+  const at = location.hash;
   const jobs = (await api('/api/jobs')).filter((j) => j.hasReel);
+  if (location.hash !== at) return;
   view.innerHTML = `<div class="eyebrow">완성한 영상 올리기</div><h1>게시 · 예약<i>.</i></h1>
     <p class="lead">영상을 받아서 인스타·유튜브 앱에서 직접 올려요.<br>올릴 날짜를 적어두고, 올린 뒤 체크하세요.</p>
     ${jobs.length ? '' : '<p class="muted">아직 완성된 영상이 없어요.</p>'}<div id="plist"></div>`;
@@ -447,7 +455,9 @@ async function settings() {
     <button class="btn ghost" id="re" style="margin-top:26px">↻ 상태 확인</button></div>
     <p class="lead">내 PC와 도구를 준비하면 스튜디오가 완성됩니다.</p><div id="sbox"><div class="card"><span class="spin"></span></div></div>`;
   $('#re').onclick = settings;
+  const at = location.hash;
   const s = await api('/api/status');
+  if (location.hash !== at || !$('#sbox')) return;
   const row = (k, v, cls = '') => `<div class="srow"><span>${k}</span><b class="${cls}">${v}</b></div>`;
   const gb = s.freeBytes ? `${(s.freeBytes / 1e9).toFixed(1)} GB 남음` : '알 수 없음';
   const bgm = await api('/api/bgm').catch(() => []);
@@ -500,8 +510,10 @@ async function route() {
   clearTimeout(timer);
   const [name, arg] = (location.hash.slice(1) || 'home').split('/');
   document.querySelectorAll('nav.tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === (name === 'job' ? 'home' : name)));
+  view.classList.remove('wide');
   try {
-    if (name === 'create') create();
+    if (name === 'office' && window.officeView) await window.officeView();
+    else if (name === 'create') create();
     else if (name === 'post') await post();
     else if (name === 'settings') await settings();
     else if (name === 'job' && arg) await jobView(decodeURIComponent(arg));
