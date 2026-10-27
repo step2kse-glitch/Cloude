@@ -9,9 +9,10 @@
     "draft": "node scripts/naver_draft.js",
     "probe": "node scripts/probe_selectors.js",
     "mosaic": "node scripts/mosaic.js",
-    "check": "node --check scripts/naver_draft.js && node --check scripts/naver_login.js && node --check scripts/mosaic.js && node --check scripts/probe_selectors.js && node --check scripts/lib/common.js && node --check auction/scripts/court_capture.js && node --check auction/scripts/calc.js",
-    "auction:capture": "node auction/scripts/court_capture.js",
-    "auction:calc": "node auction/scripts/calc.js"
+    "check": "node --check scripts/naver_draft.js && node --check scripts/naver_login.js && node --check scripts/mosaic.js && node --check scripts/probe_selectors.js && node --check scripts/lib/common.js && node --check auction/src/cli.js && node --check auction/src/collect.js",
+    "auction": "node auction/src/cli.js",
+    "auction:demo": "node auction/src/cli.js demo",
+    "auction:test": "node --test \"auction/test/*.test.js\""
   },
   "dependencies": {
     "playwright": "^1.48.0",

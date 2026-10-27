@@ -1,10 +1,10 @@
 // 법원경매정보(courtauction.go.kr) 순회·수집기 — 읽기 전용
 // 화면을 돌아다니며 (1) 서버가 주는 JSON/PDF 응답 (2) 화면 텍스트 (3) 클릭 가능한 요소 목록 (4) 스크린샷을
-// auction/raw/<시각>/ 에 그대로 저장한다. 해석·평가는 Claude가 이 파일들을 읽고 한다.
+// auction/workspace/raw/<시각>/ 에 그대로 저장한다. 해석·평가는 Claude가 이 파일들을 읽고 한다.
 //
 // 사용:
-//   node auction/scripts/court_capture.js                     수동 모드: 브라우저에서 직접 검색·클릭, 전부 자동 기록
-//   node auction/scripts/court_capture.js --recipe auction/data/recipes/search.json [--criteria auction/data/criteria.json]
+//   node auction/src/cli.js collect                      수동 모드: 브라우저에서 직접 검색·클릭, 전부 자동 기록
+//   node auction/src/cli.js collect --recipe auction/config/recipe.json --criteria auction/config/criteria.json
 //                                                              자동 모드: 레시피(실측 셀렉터) 대로 순회
 //   옵션: --out <폴더>  --max-minutes 20  --headless  --url <시작 URL>
 //
@@ -15,6 +15,7 @@ const crypto = require('crypto');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..', '..');
+const RAW_DIR = path.join(ROOT, 'auction', 'workspace', 'raw');
 const START_URL = 'https://www.courtauction.go.kr/';
 const MIN_GAP_MS = 1500;
 const VIEWPORT = { width: 1600, height: 1000 };
@@ -244,7 +245,7 @@ async function runSteps(page, steps, vars, rec, depth = 0) {
 // ---------- 메인 ----------
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const outDir = path.resolve(args.out || path.join(ROOT, 'auction', 'raw', stamp()));
+  const outDir = path.resolve(args.out || path.join(RAW_DIR, stamp()));
   const rec = new Recorder(outDir);
   const vars = args.criteria ? JSON.parse(fs.readFileSync(args.criteria, 'utf8')) : {};
   const recipe = args.recipe ? JSON.parse(fs.readFileSync(args.recipe, 'utf8')) : null;

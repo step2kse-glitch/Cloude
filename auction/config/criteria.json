@@ -1,0 +1,46 @@
+{
+  "_note": "/auction 이 검색·평가에 쓰는 조건. 빈 값은 '조건 없음'. 채팅으로 말하면 Claude가 고쳐준다.",
+  "goal": "투자(단기매도)",
+  "court": "수원지방법원",
+  "sido": "경기도",
+  "sigungu": "화성시",
+  "usage": "아파트",
+  "minAppraisal": 0,
+  "maxMinPrice": 500000000,
+  "minFailCount": 1,
+  "areaM2Min": 59,
+  "areaM2Max": 85,
+  "cashAvailable": 200000000,
+  "buyer": {
+    "houseCountAfter": 1,
+    "regulatedArea": false,
+    "loanRatio": 0.6,
+    "interestRate": 0.05,
+    "holdMonths": 26,
+    "firstHome": false
+  },
+  "targetMarginRate": 0.08,
+  "maxCandidates": 15,
+  "excludeRisks": [
+    "유치권",
+    "법정지상권",
+    "지분매각",
+    "선순위 가처분",
+    "대지권미등기",
+    "분묘기지권"
+  ],
+  "_goalOptions": "실거주 / 투자(단기매도) / 임대(전세·월세) / 상관없음(가장 유리한 방법 추천)",
+  "home": {
+    "_note": "goal 이 실거주일 때 집 고르는 기준",
+    "workplace": "",
+    "commuteMaxMin": 50,
+    "needSchool": true,
+    "minRooms": 3,
+    "priorities": [
+      "출퇴근",
+      "학교",
+      "생활편의"
+    ],
+    "moveInBy": ""
+  }
+}

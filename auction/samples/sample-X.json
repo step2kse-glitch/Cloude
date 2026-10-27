@@ -1,0 +1,28 @@
+{
+  "_sample": "가상의 연습용 물건 (실제 사건 아님) — 선순위 가처분",
+  "caseNo": "2099타경10003",
+  "court": "수원지방법원",
+  "saleDate": "2099-12-04",
+  "usage": "다세대",
+  "address": "경기도 화성시 연습동 (예시)",
+  "areaM2": 49.5,
+  "appraisal": 210000000,
+  "appraisalDate": "2099-04-20",
+  "minPrice": 102900000,
+  "failCount": 2,
+  "depositRate": 0.1,
+  "smallTenantRegion": "과밀억제",
+  "registry": [
+    { "type": "처분금지가처분", "date": "2018-01-10", "holder": "개인" },
+    { "type": "근저당", "date": "2019-07-01", "holder": "가상캐피탈", "amount": 150000000 },
+    { "type": "경매개시결정", "date": "2099-02-11", "holder": "가상캐피탈" }
+  ],
+  "tenants": [],
+  "tenantsUnknown": true,
+  "flags": [],
+  "spec": { "notExtinguished": "갑구 처분금지가처분은 매각으로 소멸되지 않음", "remarks": "" },
+  "marketPrice": { "low": 160000000, "mid": 175000000, "high": 185000000, "source": "예시" },
+  "costs": { "evictionCost": 5000000, "repairCost": 15000000 },
+  "summary": "선순위 처분금지가처분 — 본안 결과에 따라 소유권 상실 가능",
+  "sources": { "list": "샘플", "spec": "샘플" }
+}

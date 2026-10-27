@@ -1,0 +1,70 @@
+{
+  "_sample": "가상의 연습용 물건 (실제 사건 아님)",
+  "caseNo": "2099타경10001",
+  "court": "수원지방법원",
+  "saleDate": "2099-11-20",
+  "usage": "아파트",
+  "address": "경기도 화성시 가상동 (예시)",
+  "areaM2": 84.9,
+  "appraisal": 520000000,
+  "appraisalDate": "2099-05-10",
+  "minPrice": 364000000,
+  "failCount": 1,
+  "depositRate": 0.1,
+  "smallTenantRegion": "과밀억제",
+  "registry": [
+    {
+      "type": "근저당",
+      "date": "2019-03-02",
+      "holder": "가상은행",
+      "amount": 300000000
+    },
+    {
+      "type": "가압류",
+      "date": "2023-08-11",
+      "holder": "가상카드",
+      "amount": 15000000
+    },
+    {
+      "type": "경매개시결정",
+      "date": "2099-04-01",
+      "holder": "가상은행"
+    }
+  ],
+  "tenants": [],
+  "occupant": "소유자 점유",
+  "flags": [],
+  "spec": {
+    "notExtinguished": "해당사항 없음",
+    "remarks": ""
+  },
+  "marketPrice": {
+    "low": 470000000,
+    "mid": 490000000,
+    "high": 510000000,
+    "source": "예시: 실거래 최근 6개월 동일평형 3건"
+  },
+  "costs": {
+    "evictionCost": 3000000,
+    "repairCost": 10000000,
+    "unpaidMgmtFee": 2000000,
+    "monthlyHoldingCost": 300000
+  },
+  "summary": "소유자 점유, 말소기준 근저당 이후 권리 모두 소멸",
+  "sources": {
+    "list": "샘플",
+    "spec": "샘플"
+  },
+  "rentMarket": {
+    "jeonse": 330000000,
+    "monthlyDeposit": 50000000,
+    "monthlyRent": 1400000,
+    "source": "예시: 인근 중개사 2곳"
+  },
+  "homeFit": {
+    "commute": "예시: 동탄역 SRT 15분",
+    "school": "예시: 초등학교 도보 7분",
+    "living": "예시: 대형마트·공원 인접",
+    "score": 4
+  }
+}
