@@ -1,0 +1,106 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<style>
+@font-face{font-family:'Noto Serif KR';font-weight:700;src:url('file:///home/user/Cloude/carousel/fonts/NotoSerifKR-Bold.ttf');}
+@font-face{font-family:'Noto Serif KR';font-weight:900;src:url('file:///home/user/Cloude/carousel/fonts/NotoSerifKR-Black.ttf');}
+@font-face{font-family:'Noto Sans KR';font-weight:400;src:url('file:///home/user/Cloude/carousel/fonts/NotoSansKR-Regular.ttf');}
+@font-face{font-family:'Noto Sans KR';font-weight:500;src:url('file:///home/user/Cloude/carousel/fonts/NotoSansKR-Medium.ttf');}
+@font-face{font-family:'Noto Sans KR';font-weight:700;src:url('file:///home/user/Cloude/carousel/fonts/NotoSansKR-Bold.ttf');}
+@font-face{font-family:'Noto Serif Hebrew';font-weight:700;src:url('file:///home/user/Cloude/carousel/fonts/NotoSerifHebrew-Bold.ttf');}
+@font-face{font-family:'Noto Serif';font-weight:700;src:url('file:///home/user/Cloude/carousel/fonts/NotoSerif-Bold.ttf');}
+  :root { --paper:#1c1714; --ink:#F4EEE3; --muted:rgba(244,238,227,.62); --accent:#F2C14E; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width:1080px; height:1350px; }
+  body {
+    background: #1c1714 url('file:///home/user/Cloude/brand/reel-bg-leather.png') center / cover no-repeat;
+    color: #F4EEE3;
+    font-family: 'Noto Sans KR', sans-serif;
+    word-break: keep-all;
+  }
+  .frame {
+    position: relative; width: 100%; height: 100%;
+    padding: 130px 110px 150px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .frame.photo { justify-content: flex-end; padding-bottom: 190px; }
+  .frame.photo .rule { margin: 40px 0; }
+  .frame::before {
+    content: ''; position: absolute; inset: 40px;
+    border: 2px solid rgba(244,238,227,.25);
+    pointer-events: none;
+  }
+  .top, .bottom {
+    position: absolute; left: 110px; right: 110px;
+    display: flex; justify-content: space-between;
+    font-size: 26px; letter-spacing: .04em;
+    color: rgba(244,238,227,.7);
+  }
+  .top { top: 80px; } .bottom { bottom: 80px; }
+  .kicker { font-size: 32px; font-weight: 700; color: #F2C14E; letter-spacing: .06em; margin-bottom: 44px; }
+  h1, h2, blockquote, .word, .key, .phrase, .prayer { font-family: 'Noto Serif KR', serif; }
+  .word { font-family: 'Noto Serif Hebrew', 'Noto Serif', 'Noto Serif KR', serif; }
+  .phrase { font-size: 76px; line-height: 1.35; font-weight: 900; color: var(--accent); }
+  .prayer { font-size: 50px; line-height: 1.7; font-weight: 700; }
+  .amen { margin-top: 40px; font-size: 40px; font-weight: 700; color: var(--accent); }
+  .cover-title { font-size: 92px; line-height: 1.32; font-weight: 900; text-shadow: 0 2px 18px rgba(0,0,0,.35); }
+  h2 { font-size: 80px; line-height: 1.3; font-weight: 900; }
+  .rule { width: 90px; height: 6px; background: #F2C14E; margin: 56px 0; }
+  .sub { font-size: 36px; opacity: .85; }
+  .body { font-size: 40px; line-height: 1.75; color: #F4EEE3; }
+  .mark { font-family: 'Noto Serif KR', serif; font-size: 200px; line-height: .6; color: var(--accent); height: 100px; }
+  blockquote { font-size: 64px; line-height: 1.5; font-weight: 700; margin: 30px 0 50px; }
+  blockquote.long { font-size: 50px; margin: 10px 0 36px; }
+  blockquote.xlong { font-size: 44px; line-height: 1.55; }
+  blockquote.verse { font-size: 76px; }
+  blockquote.verse.long { font-size: 58px; margin: 20px 0 36px; }
+  .cite { font-size: 32px; color: var(--muted); }
+  .word { font-size: 120px; font-weight: 700; color: var(--accent); line-height: 1.1; }
+  .word.long { font-size: 78px; }
+  .gloss { font-size: 34px; color: var(--muted); margin-top: 24px; }
+  .key { font-size: 118px; line-height: 1.35; font-weight: 900; }
+  .list { list-style: none; counter-reset: q; }
+  .list li { counter-increment: q; position: relative; padding-left: 90px; font-size: 42px; line-height: 1.6; margin-bottom: 56px; }
+  .list li::before {
+    content: counter(q); position: absolute; left: 0; top: 4px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--accent); color: var(--paper);
+    font-size: 32px; font-weight: 700; display: grid; place-items: center;
+  }
+  .next { margin-top: 90px; padding-top: 40px; border-top: 2px solid rgba(244,238,227,.2); font-size: 34px; line-height: 1.6; font-weight: 700; }
+  .follow { margin-top: 70px; display: flex; align-items: center; gap: 30px; font-size: 40px; font-weight: 700; }
+  .follow img { width: 150px; height: 150px; }
+  .lt-to { font-family: 'Noto Serif KR', serif; font-size: 36px; font-weight: 700; color: rgba(43,33,24,.6); }
+  .lt-pre { margin-top: 70px; font-size: 38px; color: rgba(43,33,24,.75); }
+  .lt-big { margin-top: 18px; font-family: 'Noto Serif KR', serif; font-size: 118px; line-height: 1.22; font-weight: 900; color: #2B2118; }
+  .lt-win { color: #9A2C22; }
+  .lt-brush { width: 470px; height: 34px; margin: 6px 0 0 4px; display: block; }
+  .lt-body { margin-top: 54px; font-size: 38px; line-height: 1.7; color: rgba(43,33,24,.85); }
+  .lt-from { margin-top: 56px; display: flex; align-items: center; gap: 26px; font-family: 'Noto Serif KR', serif; font-size: 38px; font-weight: 700; }
+  .lt-from img { width: 130px; height: 130px; }
+  .rv-tear { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .rv-head, .rv-light, .rv-foot { position: absolute; left: 110px; right: 110px; text-align: center; }
+  .rv-head { top: 175px; } .rv-head .kicker { margin-bottom: 26px; }
+  .rv-pre { font-family: 'Noto Serif KR', serif; font-size: 44px; line-height: 1.5; font-weight: 700; color: rgba(244,238,227,.88); }
+  .rv-light { top: 515px; color: #2A1D12; }
+  .rv-small { font-family: 'Noto Serif KR', serif; font-size: 62px; font-weight: 900; letter-spacing: -.01em; }
+  .rv-big { font-family: 'Noto Serif KR', serif; font-size: 190px; line-height: 1.05; font-weight: 900; letter-spacing: -.02em; }
+  .rv-foot { top: 985px; }
+  .rv-foot p { font-size: 36px; line-height: 1.6; color: rgba(244,238,227,.85); }
+  .rv-brand { margin-top: 30px; display: flex; justify-content: center; align-items: center; gap: 22px; font-size: 34px; font-weight: 700; color: #F4EEE3; }
+  .rv-brand img { width: 120px; height: 120px; }
+  .nt-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .nt-head { position: absolute; left: 110px; right: 110px; top: 170px; }
+  .nt-head .kicker { margin-bottom: 30px; }
+  .nt-big { font-family: 'Noto Serif KR', serif; font-size: 100px; line-height: 1.25; font-weight: 900; color: #FFF8EA; text-shadow: 0 4px 30px rgba(0,0,0,.5); }
+  .nt-win { color: #F2C14E; }
+  .nt-foot { position: absolute; left: 110px; right: 110px; top: 1135px; display: flex; justify-content: space-between; align-items: center; font-size: 34px; font-weight: 500; white-space: nowrap; color: rgba(244,238,227,.88); }
+  .nt-foot img { width: 96px; height: 96px; }
+  .cta { margin-top: 20px; font-size: 30px; color: var(--accent); font-weight: 700; }
+</style></head><body>
+<div class="frame">
+  <div class="top"><span>오늘도 복음</span><span>나는 그리스도의 몸입니다</span></div>
+  <div class="kicker">오늘 나에게</div>
+        <div class="phrase">증명하는 삶에서<br>나타내는 삶으로</div>
+        <div class="rule"></div>
+        <p class="body">우리의 삶은 우리의 증명이 아닙니다.<br>그리스도께서 우리의 머리가 되시고<br>우리의 전부가 되어 주셨습니다.<br><br>이제 그분의 영광을 나타내며<br>살아갑니다.</p>
+  <div class="bottom"><span>@thinking_atelier1020</span><span>5 / 6</span></div>
+</div></body></html>
