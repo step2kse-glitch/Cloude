@@ -28,6 +28,7 @@ data/                     profile / blogger-profile / authority-lines / photo-gu
 input/photos/ input/videos/   사용자가 넣는 소재
 drafts/                   초안 JSON, 모자이크 spec, 검증 덤프·스크린샷
 naver-profile/            로그인 세션 (절대 외부 공유·커밋 금지, .gitignore 처리됨)
+auction/                  법원경매 순회·평가 툴 (/auction) — 지침은 auction/CLAUDE.md
 ```
 
 ## 절대 규칙

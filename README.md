@@ -62,6 +62,27 @@ Claude Code 채팅에서:
 | `/analyze-trends` | 상위노출 글을 붙여넣으면 글자 수·사진 수 등 세팅값 추출 |
 | `/setup-login` | 네이버 로그인 다시 하기 |
 
+## 법원경매 AI 순회·리포트 (`auction/`)
+
+검색 조건만 주면 Claude가 법원경매정보를 돌아다니며 물건을 모으고, 권리분석·시세·수익을 계산해
+**등급(A/B/C/X)·입찰가(보수/추천/상한)·진행 일정**이 들어간 리포트를 `auction/reports/` 에 써줍니다.
+입찰은 항상 내가 법원에 가서 합니다.
+
+1. 조건 수정: `auction/data/criteria.json` (또는 채팅으로 "화성 아파트 5억 이하로 바꿔줘")
+2. 채팅: `/auction` (특정 물건만: `/auction 2026타경12345`)
+3. **첫 실행**은 크롬 창에서 직접 검색·상세 화면을 열어 주세요. 모든 화면이 기록되고, Claude가 이를 보고
+   다음부터 자동으로 순회하도록 레시피(`auction/data/recipes/search.json`)를 채웁니다.
+4. 임장·대출 상담 결과를 알려주면 입찰가를 다시 계산합니다.
+
+| 파일 | 내용 |
+|---|---|
+| `auction/scripts/court_capture.js` | 사이트 순회·수집 (읽기 전용, 입찰·로그인 버튼 클릭 차단) |
+| `auction/scripts/calc.js` | 취득세·이자·필요현금·입찰가 계산 — `npm run auction:calc auction/cases/example.json` |
+| `auction/data/rights-guide.md` | 권리분석·임차인·리스크·등급 기준 |
+| `auction/data/bidding-guide.md` | 임장 → 입찰 준비물 → 낙찰 후 일정 → 명도 |
+
+⚠ 리포트는 참고용이며 법률·세무 자문이 아닙니다. 세율(`tax-rates.json`)은 단순화 값이라 입찰 전 꼭 재확인하세요.
+
 ## 막힐 때
 
 - `스크립트를 실행할 수 없으므로` → PowerShell에서 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` 후 `Y`

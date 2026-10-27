@@ -1,0 +1,23 @@
+{
+  "_note": "예시 케이스 (가상의 숫자). /auction 이 실제 물건마다 이 형식으로 auction/cases/<사건번호>.json 을 만든다.",
+  "caseNo": "2026타경00000 (예시)",
+  "court": "수원지방법원",
+  "address": "경기도 화성시 ○○동 (예시)",
+  "usage": "아파트",
+  "areaM2": 84.9,
+  "appraisal": 520000000,
+  "minPrice": 364000000,
+  "failCount": 1,
+  "saleDate": "2026-11-20",
+  "depositRate": 0.1,
+  "marketPrice": { "low": 470000000, "mid": 490000000, "high": 510000000, "source": "국토부 실거래가 최근 6개월 동일 평형 3건 (예시)" },
+  "assumedAmount": 0,
+  "evictionCost": 3000000,
+  "repairCost": 10000000,
+  "unpaidMgmtFee": 2000000,
+  "monthlyHoldingCost": 300000,
+  "exit": "sell",
+  "rentMonthly": 0,
+  "targetMarginRate": 0.08,
+  "buyer": { "houseCountAfter": 1, "regulatedArea": false, "loanRatio": 0.6, "interestRate": 0.05, "holdMonths": 26 }
+}

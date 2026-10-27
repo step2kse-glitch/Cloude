@@ -1,0 +1,31 @@
+{
+  "_note": "2026년 기준 단순화한 취득세 표. 법 개정·감면(생애최초 등)·지역 지정 변경이 잦으니 입찰 전 위택스/세무사로 반드시 재확인. 값을 바꾸면 calc.js 결과가 바로 바뀐다.",
+  "housing": {
+    "basic": [
+      { "upTo": 600000000, "rate": 0.01 },
+      { "upTo": 900000000, "rate": "sliding" },
+      { "upTo": null, "rate": 0.03 }
+    ],
+    "multi": {
+      "regulated": { "2": 0.08, "3": 0.12, "4": 0.12 },
+      "nonRegulated": { "2": "basic", "3": 0.08, "4": 0.12 }
+    },
+    "eduTaxRatioOfBasic": 0.1,
+    "eduTaxMulti": 0.004,
+    "ruralTaxOver85m2": { "basic": 0.002, "0.08": 0.006, "0.12": 0.01 }
+  },
+  "nonHousing": { "rate": 0.04, "eduTax": 0.004, "ruralTax": 0.002 },
+  "misc": {
+    "_note": "법무사 보수·등기 수수료·국민주택채권 할인 등 이전 비용 (대략치)",
+    "transferRate": 0.003,
+    "transferFixed": 500000
+  },
+  "sale": {
+    "brokerRate": 0.004,
+    "_capitalGainsNote": "양도세는 보유기간·주택수·비과세 요건에 따라 크게 달라 단기(2년 미만) 주택 매도만 대략 추정한다. 나머지는 세무사 확인.",
+    "shortTermHousing": [
+      { "underMonths": 12, "rate": 0.77 },
+      { "underMonths": 24, "rate": 0.66 }
+    ]
+  }
+}
