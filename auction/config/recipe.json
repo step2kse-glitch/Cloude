@@ -1,0 +1,25 @@
+{
+  "_note": "법원경매정보 자동 순회 레시피. ⚠ 셀렉터는 아직 실측 전이라 비어 있다. 첫 실행은 수동 모드로 돌려 workspace/raw/<시각>/snap-*.elements.json 에서 실제 id·class를 확인한 뒤 /auction 이 이 파일을 채우고 verified:true 로 바꾼다. 추측으로 채우지 말 것.",
+  "verified": false,
+  "startUrl": "https://www.courtauction.go.kr/",
+  "steps": [
+    { "action": "click", "note": "메뉴: 경매물건 > 물건상세검색", "text": "물건상세검색" },
+    { "action": "select", "note": "법원 선택", "selector": "", "value": "{{court}}" },
+    { "action": "select", "note": "용도 선택", "selector": "", "value": "{{usage}}" },
+    { "action": "fill", "note": "최저가 상한", "selector": "", "value": "{{maxMinPrice}}" },
+    { "action": "click", "note": "검색 버튼", "selector": "" },
+    { "action": "wait", "ms": 3000 },
+    { "action": "snapshot", "label": "list" },
+    {
+      "action": "clickEach",
+      "note": "목록의 사건번호 링크를 하나씩 열기",
+      "selector": "",
+      "max": 15,
+      "then": [
+        { "action": "wait", "ms": 2500 },
+        { "action": "snapshot", "label": "detail-{{row}}" }
+      ],
+      "back": []
+    }
+  ]
+}

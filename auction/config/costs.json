@@ -1,0 +1,19 @@
+{
+  "_note": "명도·임대·실거주 비교에 쓰는 대략치. 지역·물건마다 다르니 임장·중개사 상담 후 케이스 JSON 에서 덮어쓴다. 값은 모두 '추정'으로 표시된다.",
+  "eviction": {
+    "moveOutPayment": { "low": 2000000, "mid": 3000000, "high": 5000000, "_note": "이사비 협의금 (법적 의무 아님, 아파트 기준 관행 범위)" },
+    "forcedExecution": { "perM2": 40000, "fixed": 1000000, "storageMonthly": 300000, "storageMonths": 3, "_note": "강제집행 노무비·운반·보관 추정" },
+    "months": { "vacant": 0.5, "agreed": 1.5, "order": 3, "forced": 5, "_note": "잔금 후 인도까지 걸리는 개월 수 추정" }
+  },
+  "lease": {
+    "brokerRate": { "jeonse": 0.004, "monthly": 0.004 },
+    "vacancyMonths": 2,
+    "_note": "임대 세팅까지 공실 개월 수(명도 기간 별도)"
+  },
+  "home": {
+    "normalPurchaseBrokerRate": 0.004,
+    "firstHomeTaxRelief": { "max": 2000000, "priceLimit": 1200000000, "_note": "생애최초 주택 취득세 감면 — 적용 기한·요건 위택스 재확인" }
+  },
+  "jeonseRiskRatio": 0.7,
+  "rentalHorizonMonths": 24
+}

@@ -1,0 +1,78 @@
+{
+  "_sample": "가상의 연습용 물건 (실제 사건 아님) — 대항력 있는 임차인이 배당요구, 일부 미배당",
+  "caseNo": "2099타경10002",
+  "court": "수원지방법원",
+  "saleDate": "2099-11-27",
+  "usage": "아파트",
+  "address": "경기도 화성시 예시동 (예시)",
+  "areaM2": 59.9,
+  "appraisal": 400000000,
+  "appraisalDate": "2099-05-02",
+  "minPrice": 196000000,
+  "failCount": 2,
+  "depositRate": 0.1,
+  "smallTenantRegion": "과밀억제",
+  "registry": [
+    {
+      "type": "근저당",
+      "date": "2021-06-15",
+      "holder": "가상저축은행",
+      "amount": 120000000
+    },
+    {
+      "type": "압류",
+      "date": "2024-02-01",
+      "holder": "가상시청"
+    },
+    {
+      "type": "경매개시결정",
+      "date": "2099-03-20",
+      "holder": "가상저축은행"
+    }
+  ],
+  "tenants": [
+    {
+      "label": "임차인1",
+      "moveIn": "2020-09-01",
+      "fixedDate": "2020-09-01",
+      "demanded": true,
+      "deposit": 230000000,
+      "monthly": 0,
+      "source": "매각물건명세서"
+    }
+  ],
+  "flags": [],
+  "spec": {
+    "notExtinguished": "임차인1 보증금 중 배당받지 못한 잔액은 매수인이 인수함",
+    "remarks": ""
+  },
+  "marketPrice": {
+    "low": 330000000,
+    "mid": 345000000,
+    "high": 360000000,
+    "source": "예시: 실거래 최근 6개월 2건 + 호가"
+  },
+  "costs": {
+    "evictionCost": 0,
+    "repairCost": 5000000,
+    "unpaidMgmtFee": 0,
+    "monthlyHoldingCost": 250000
+  },
+  "summary": "선순위 임차인(대항력 O) 배당요구 — 최저가 낙찰 시 미배당 잔액 인수",
+  "sources": {
+    "list": "샘플",
+    "spec": "샘플"
+  },
+  "rentMarket": {
+    "jeonse": 250000000,
+    "monthlyDeposit": 30000000,
+    "monthlyRent": 1000000,
+    "source": "예시: 인근 중개사 1곳"
+  },
+  "homeFit": {
+    "commute": "예시: 버스 40분",
+    "school": "예시: 초등학교 도보 12분",
+    "living": "예시: 상가 적음",
+    "score": 3
+  }
+}
