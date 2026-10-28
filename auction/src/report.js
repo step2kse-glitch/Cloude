@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { won, eok, pct, toDate, ymd, addDays } = require('./lib/util');
 const { affordableBid } = require('./calc');
+const rightsView = require('./rights-view');
 
 const GRADE_ORDER = { A: 0, B: 1, C: 2, 보류: 3, X: 4 };
 const GRADE_LABEL = { A: 'A 입찰 권장', B: 'B 조건부', C: 'C 관망', 보류: '보류', X: 'X 제외' };
@@ -56,6 +57,17 @@ function caseSection(c, r, n) {
       .join('\n')
   );
 
+  // 권리관계 (매물 볼 때 가장 먼저)
+  out.push(rightsView.section(c, r));
+  const detail = [];
+  if (a.rights.length) detail.push(table(['권리', '날짜', '권리자', '판정', '이유'], a.rights.map((x) => [x.type, x.date, x.holder, x.status === '인수' || x.status === '위험' ? `❗${x.status}` : x.status, x.reason])));
+  if (a.tenants.length) {
+    detail.push(table(['점유자', '전입', '확정일자', '배당요구', '보증금', '대항력', '예상 배당', '낙찰자 인수'], a.tenants.map((t) => [t.label, t.moveIn, t.fixedDate, t.demanded ? 'O' : 'X', won(t.deposit), t.opposable ? '❗있음' : '없음', won(t.distributed), t.assumed ? `❗${won(t.assumed)}` : '0'])));
+    detail.push(`배당 계산 (최저가 ${won(a.distribution.assumedPrice)} 낙찰 가정, 간이)\n\n${table(['순서', '금액'], a.distribution.log.map((l) => [l.step, won(l.amount)]))}`);
+  }
+  if (detail.length) out.push(`<details><summary>권리·임차인·배당 상세 표</summary>\n\n${detail.join('\n\n')}\n\n</details>`);
+  if (r.grade === 'X') return out.join('\n\n');
+
   // 얼마를 넣어야 하나
   if (k.bids) {
     out.push('#### 💰 입찰가와 넣어야 할 돈');
@@ -70,19 +82,6 @@ function caseSection(c, r, n) {
   } else {
     out.push(`#### 💰 입찰가\n${k.verdict}`);
   }
-
-  // 권리분석
-  out.push('#### ⚖️ 권리분석');
-  out.push(`말소기준권리: ${a.baseRight ? `**${a.baseRight.type} ${a.baseRight.date}** ${a.baseRight.holder || ''}` : '❓ 미확정'}`);
-  if (a.rights.length) out.push(table(['권리', '날짜', '권리자', '판정', '이유'], a.rights.map((x) => [x.type, x.date, x.holder, x.status === '인수' || x.status === '위험' ? `❗${x.status}` : x.status, x.reason])));
-  if (c.spec) out.push(`- 명세서 "소멸되지 않는 권리": "${c.spec.notExtinguished || '-'}"\n- 명세서 비고: "${c.spec.remarks || '-'}"`);
-  if (a.tenants.length) {
-    out.push(table(['점유자', '전입', '확정일자', '배당요구', '보증금', '대항력', '예상 배당', '낙찰자 인수'], a.tenants.map((t) => [t.label, t.moveIn, t.fixedDate, t.demanded ? 'O' : 'X', won(t.deposit), t.opposable ? '❗있음' : '없음', won(t.distributed), t.assumed ? `❗${won(t.assumed)}` : '0'])));
-    out.push(`<details><summary>배당 계산 (최저가 ${won(a.distribution.assumedPrice)} 낙찰 가정, 간이)</summary>\n\n${table(['순서', '금액'], a.distribution.log.map((l) => [l.step, won(l.amount)]))}\n\n</details>`);
-  } else {
-    out.push(`점유: ${c.occupant || (c.tenantsUnknown ? '❓ 미확인' : '임차인 없음')}`);
-  }
-  if (a.assumedAmount) out.push(`**낙찰자 인수 예상액**: 최저가 낙찰 시 ${won(a.assumedAmount)} → 추천가 낙찰 시 ${won(a.assumedAtRecommended)} (입찰가 계산에 낙찰가별로 반영)`);
 
   // 명도
   const ev = r.eviction;
@@ -143,10 +142,12 @@ function buildMarkdown(cases, criteria, meta = {}) {
   ].filter(Boolean).join('\n'));
 
   md.push('## 2. 한눈에 보기');
-  md.push(table(['순위', '등급', '사건번호', '물건', '최저가(%)', '매각기일', '추천 입찰가', '잔금일 현금', '추천 방법', '기준 이익'], sorted.map((x, i) => {
+  md.push(table(['순위', '등급', '사건번호', '물건', '권리', '최저가(%)', '매각기일', '추천 입찰가', '잔금일 현금', '추천 방법', '기준 이익'], sorted.map((x, i) => {
     const r = x.result;
+    const head = [i + 1, GRADE_LABEL[r.grade], x.caseNo, `${x.usage || ''} ${x.areaM2 || ''}㎡`, rightsView.label(x, r.analysis), `${eok(x.minPrice)} (${pct(r.calc.minPriceRatio)})`, x.saleDate];
+    if (r.grade === 'X') return [...head, '**입찰 비추천**', '-', '-', '-'];
     const best = (r.strategy.options || []).find((o) => o.key === r.strategy.best);
-    return [i + 1, GRADE_LABEL[r.grade], x.caseNo, `${x.usage || ''} ${x.areaM2 || ''}㎡`, `${eok(x.minPrice)} (${pct(r.calc.minPriceRatio)})`, x.saleDate, won(r.calc.bids && r.calc.bids.recommended), won(r.calc.scenarios && r.calc.scenarios.mid.cashNeeded), best ? best.name : '-', won(r.calc.scenarios && r.calc.scenarios.mid.profit)];
+    return [...head, won(r.calc.bids && r.calc.bids.recommended), won(r.calc.scenarios && r.calc.scenarios.mid.cashNeeded), best ? best.name : '-', won(r.calc.scenarios && r.calc.scenarios.mid.profit)];
   })));
   const counts = sorted.reduce((m, x) => ((m[x.result.grade] = (m[x.result.grade] || 0) + 1), m), {});
   md.push(`검토 ${sorted.length}건 → ${Object.entries(counts).map(([g, n]) => `${g} ${n}`).join(' · ')}`);
@@ -173,6 +174,7 @@ function buildMarkdown(cases, criteria, meta = {}) {
   if (ex.length) {
     md.push(`## ${live ? 5 : 4}. 제외 물건`);
     md.push(ex.map((x) => `- **${x.caseNo}** ${x.address || ''} — ${x.result.reasons.join(' · ')}`).join('\n'));
+    ex.forEach((x) => md.push(`<details><summary>${x.caseNo} 권리관계 보기 (왜 제외됐는지)</summary>\n\n${caseSection(x, x.result, '제외')}\n\n</details>`));
   }
   md.push('---\n' + DISCLAIMER);
   return md.join('\n\n') + '\n';
@@ -202,7 +204,8 @@ function toHtml(md, title) {
       const items = [];
       while (i < lines.length && /^(- |\d+\. )/.test(lines[i])) items.push(lines[i++].replace(/^(- |\d+\. )/, ''));
       i--;
-      html.push(`<${ordered ? 'ol' : 'ul'}>${items.map((x) => `<li>${inline(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`);
+      const cls = (x) => (/━━/.test(x) ? 'base' : /^[^\s]*\s?(🔴|❗)|🏠❗|^❗/.test(x) || /^\S+ (🔴|🏠❗)/.test(x) ? 'bad' : /🟠|⚠/.test(x) ? 'warn' : /^✅/.test(x) ? 'ok' : /^❓|날짜 ❓/.test(x) ? 'q' : '');
+      html.push(`<${ordered ? 'ol' : 'ul'}>${items.map((x) => `<li class="${cls(x)}">${inline(x)}</li>`).join('')}</${ordered ? 'ol' : 'ul'}>`);
     } else if (l.startsWith('> ')) {
       html.push(`<blockquote>${inline(l.slice(2))}</blockquote>`);
     } else if (l === '---') {
@@ -220,7 +223,7 @@ h1{font-size:22px}h2{font-size:19px;border-bottom:2px solid var(--accent);paddin
 blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);background:var(--card);color:var(--mute)}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}table{border-collapse:collapse;min-width:100%;background:var(--card);font-size:13.5px}
 th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;white-space:nowrap}td:last-child{white-space:normal;min-width:180px}
-th{background:var(--bg)}details{margin:8px 0}summary{cursor:pointer;color:var(--mute)}strong{color:var(--fg)}
+th{background:var(--bg)}li.base{list-style:none;margin:6px 0 6px -18px;padding:6px 10px;background:var(--card);border:2px solid var(--accent);border-radius:6px}li.bad{color:var(--warn)}li.warn{color:var(--warn);opacity:.85}li.q{color:var(--mute)}details{margin:8px 0}summary{cursor:pointer;color:var(--mute)}strong{color:var(--fg)}
 </style></head><body>${html.join('\n')}</body></html>`;
 }
 
