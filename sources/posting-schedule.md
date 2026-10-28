@@ -4,7 +4,7 @@
 
 | 세트 | 날짜 | 시간(KST) | 캔바 디자인 · 페이지 | 게시 |
 |---|---|---|---|---|
-| body-cn-01 | 10/28 | 12:20 | DAHZLC5-O9M p1 | 예약 12:20 |
+| body-cn-01 | 10/28 | 12:20 | DAHZLC5-O9M p1 | [게시](https://www.instagram.com/p/DfBdRBUjRKX/) |
 | body-cn-02 | 10/28 | 13:20 | DAHZLC5-O9M p2 | 예약 13:20 |
 | body-cn-03 | 10/28 | 14:20 | DAHZLC5-O9M p3 | 예약 14:20 |
 | body-cn-04 | 10/28 | 15:20 | DAHZLG3fF4s p1 | 예약 15:20 |
