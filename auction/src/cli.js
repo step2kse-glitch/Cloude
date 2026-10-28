@@ -36,8 +36,9 @@ function evalFiles(files, criteria) {
     console.log(`\n[${result.grade}] ${c.caseNo}  ${c.address || ''}`);
     console.log(`  사유: ${result.reasons.join(' · ')}`);
     console.log(`  최저가 ${won(c.minPrice)} (${pct(k.minPriceRatio)}) / 인수예상 ${won(result.analysis.assumedAmount)} / 명도: ${result.eviction.type}`);
-    if (k.bids) console.log(`  입찰가 보수 ${won(k.bids.conservative)} | 추천 ${won(k.bids.recommended)} | 상한 ${won(k.bids.ceiling)} / 잔금일 현금 ${won(k.scenarios.mid.cashNeeded)}`);
-    if (best) console.log(`  추천 방법: ${best.name} → 예상 이익 ${won(best.profit)}`);
+    if (result.grade === 'X') console.log('  입찰 비추천 (제외 물건)');
+    else if (k.bids) console.log(`  입찰가 보수 ${won(k.bids.conservative)} | 추천 ${won(k.bids.recommended)} | 상한 ${won(k.bids.ceiling)} / 잔금일 현금 ${won(k.scenarios.mid.cashNeeded)}`);
+    if (best && result.grade !== 'X') console.log(`  추천 방법: ${best.name} → 예상 이익 ${won(best.profit)}`);
     if (result.analysis.questions.length) console.log(`  ❓ ${result.analysis.questions.join(' / ')}`);
     out.push({ ...clean, result });
   }

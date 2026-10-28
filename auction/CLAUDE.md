@@ -14,6 +14,7 @@
 | `eviction.js` | 명도 유형·절차·비용·기간 |
 | `calc.js` | 취득세·이자·필요현금·입찰가(보수/추천/상한)·예산 |
 | `strategy.js` | 매도 / 전세 / 월세 / 실거주 비교와 추천 |
+| `rights-view.js` | 권리관계 보기: 쉽게 말하면 · 날짜순 타임라인(말소기준 선) · 권리 체크리스트 · 한 줄 라벨 |
 | `evaluate.js` | 위를 묶고 등급(A/B/C/X/보류) |
 | `report.js` | 리포트 md + html |
 
@@ -23,7 +24,7 @@
 ## 폴더
 
 ```
-auction/src/            cli.js(진입점) collect · analyze · eviction · calc · strategy · evaluate · report
+auction/src/            cli.js(진입점) collect · analyze · rights-view · eviction · calc · strategy · evaluate · report
 auction/config/         criteria.json(내 조건) · tax-rates · small-tenant · costs · recipe(순회 레시피)
 auction/knowledge/      rights-guide(권리분석) · bidding-guide(입찰·낙찰 후) · home-finding(내 집 찾기)
 auction/samples/        가상 연습 물건 3건 (케이스 JSON 형식의 기준)
@@ -59,6 +60,7 @@ npm run auction:test                         규칙 수정 후 반드시 실행
 |---|---|---|
 | caseNo, court, saleDate, usage, address, areaM2 | 물건상세 | 물건번호 있으면 caseNo에 `(물건2)` |
 | appraisal, appraisalDate, minPrice, failCount, depositRate | 물건상세·기일내역 | 재매각이면 depositRate 0.2 등 공고값 |
+| distributionDeadline | 물건상세 | 배당요구종기 (타임라인에 표시) |
 | registry[] {type,date,holder,amount,demanded?,wholeBuilding?,tenantLabel?} | 등기부/명세서 | 갑구·을구 모두. 경매개시결정 포함 |
 | tenants[] {label,moveIn,fixedDate,demanded,deposit,monthly,source} | 매각물건명세서 | 명세서 기준. 현황조사서와 다르면 questions |
 | tenantsUnknown, occupant | 현황조사서 | 폐문부재면 tenantsUnknown: true |
