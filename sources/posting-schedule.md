@@ -7,7 +7,7 @@
 | body-cn-01 | 10/28 | 12:20 | DAHZLC5-O9M p1 | [게시](https://www.instagram.com/p/DfBdRBUjRKX/) |
 | body-cn-02 | 10/28 | 13:20 | DAHZLC5-O9M p2 | [게시](https://www.instagram.com/p/DfBkOVgEcMc/) |
 | body-cn-03 | 10/28 | 14:20 | DAHZLC5-O9M p3 | [게시](https://www.instagram.com/p/DfBq9wMDRB4/) |
-| body-cn-04 | 10/28 | 15:20 | DAHZLG3fF4s p1 | 예약 15:20 |
+| body-cn-04 | 10/28 | 15:20 | DAHZLG3fF4s p1 | [게시](https://www.instagram.com/p/DfByCfwAmZV/) |
 | body-cn-05 | 10/28 | 16:20 | DAHZLG3fF4s p2 | 예약 16:20 |
 | body-cn-06 | 10/28 | 17:20 | DAHZLG3fF4s p3 | 예약 17:20 |
 | sign-cn-01 | 10/29 | 12:20 | DAHZLGr8mFY p1 | 예약 12:20 |
