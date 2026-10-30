@@ -16,7 +16,7 @@
 | sign-cn-04 | 10/29 | 15:20 | DAHZLADzUAk p1 | [게시](https://www.instagram.com/p/DfEWxfAgr_r/) |
 | sign-cn-05 | 10/29 | 16:20 | DAHZLADzUAk p2 | [게시](https://www.instagram.com/p/DfEdtXLkhsy/) |
 | sign-cn-06 | 10/29 | 17:20 | DAHZLADzUAk p3 | [게시](https://www.instagram.com/p/DfEkTbHkbmE/) |
-| bone-cn-01 | 10/30 | 12:20 | DAHZLXH6EIQ p1 | 예약 12:20 |
+| bone-cn-01 | 10/30 | 12:20 | DAHZLXH6EIQ p1 | [게시](https://www.instagram.com/p/DfGm4iIESSB/) |
 | bone-cn-02 | 10/30 | 13:20 | DAHZLXH6EIQ p2 | 예약 13:20 |
 | bone-cn-03 | 10/30 | 14:20 | DAHZLXH6EIQ p3 | 예약 14:20 |
 | bone-cn-04 | 10/30 | 15:20 | DAHZLeY21U0 p1 | 예약 15:20 |
