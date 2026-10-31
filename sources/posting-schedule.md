@@ -27,7 +27,7 @@
 | kids-cn-03 | 10/31 | 14:20 | DAHZLa_1iU0 p3 | [게시](https://www.instagram.com/p/DfJZfMGAOm0/) |
 | kids-cn-04 | 10/31 | 15:20 | DAHZLWG-yFk p1 | [게시](https://www.instagram.com/p/DfJgKxYEvkM/) |
 | kids-cn-05 | 10/31 | 16:20 | DAHZLWG-yFk p2 | [게시](https://www.instagram.com/p/DfJnE49FVXL/) |
-| kids-cn-06 | 10/31 | 17:20 | DAHZLWG-yFk p3 | 예약 17:20 |
+| kids-cn-06 | 10/31 | 17:20 | DAHZLWG-yFk p3 | [게시](https://www.instagram.com/p/DfJt_6uEj60/) |
 | save-cn-01 | 11/01 | 12:20 | DAHZLSNr0Pc p1 | 예약 12:20 |
 | save-cn-02 | 11/01 | 13:20 | DAHZLSNr0Pc p2 | 예약 13:20 |
 | save-cn-03 | 11/01 | 14:20 | DAHZLSNr0Pc p3 | 예약 14:20 |
