@@ -4,6 +4,8 @@ const { compute } = require('./calc');
 const eviction = require('./eviction');
 const strategy = require('./strategy');
 const { config } = require('./lib/util');
+const { tags } = require('./tags');
+const { analyzeCompetition } = require('./competition');
 
 function settingsFor(c, criteria) {
   return {
@@ -40,7 +42,8 @@ function grade(c, a, calc, s) {
   return { grade: 'A', reasons: ['인수 권리 없음 · 미확인 없음 · 목표 수익 확보'] };
 }
 
-function evaluate(c, criteria = config('criteria.json')) {
+// ctx.allCases: 다른 케이스들(내 낙찰 기록을 낙찰가율 근거로 쓰기 위해)
+function evaluate(c, criteria = config('criteria.json'), ctx = {}) {
   const s = settingsFor(c, criteria);
   const a = analyze(c);
   let ev = eviction.plan(c, a);
@@ -61,7 +64,9 @@ function evaluate(c, criteria = config('criteria.json')) {
   const strat = strategy.compare(cc, sx, calc.bids && (calc.bids.recommended || calc.bids.ceiling), ev);
   const g = grade(c, a, calc, s);
   if (calc.bids && calc.bids.recommended) a.assumedAtRecommended = a.assumedAt(calc.bids.recommended);
-  return { evaluatedAt: new Date().toISOString(), ...g, analysis: a, eviction: { ...ev, estimatedUsed: evictionEstimated }, calc, strategy: strat, settings: s };
+  const competition = analyzeCompetition(c, calc.bids, ctx.allCases || []);
+  if (g.grade !== 'X' && competition.chance === '낮음') g.reasons.push('추천가로는 낙찰 가능성 낮음(비슷한 물건 낙찰가율 기준)');
+  return { evaluatedAt: new Date().toISOString(), ...g, tags: tags(c, a), analysis: a, eviction: { ...ev, estimatedUsed: evictionEstimated }, calc, competition, strategy: strat, settings: s };
 }
 
 module.exports = { evaluate };

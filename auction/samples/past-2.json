@@ -1,0 +1,70 @@
+{
+  "_sample": "가상의 지난 물건 — 낙찰 결과 기록(적중률 체험용)",
+  "caseNo": "2099타경05002",
+  "court": "수원지방법원",
+  "saleDate": "2026-07-12",
+  "usage": "아파트",
+  "address": "경기도 화성시 견본동 (예시)",
+  "areaM2": 84.9,
+  "appraisal": 380000000,
+  "appraisalDate": "2026-05-10",
+  "minPrice": 266000000,
+  "failCount": 1,
+  "depositRate": 0.1,
+  "smallTenantRegion": "과밀억제",
+  "registry": [
+    {
+      "type": "근저당",
+      "date": "2019-03-02",
+      "holder": "가상은행",
+      "amount": 300000000
+    },
+    {
+      "type": "가압류",
+      "date": "2023-08-11",
+      "holder": "가상카드",
+      "amount": 15000000
+    },
+    {
+      "type": "경매개시결정",
+      "date": "2026-04-01",
+      "holder": "가상은행"
+    }
+  ],
+  "tenants": [],
+  "occupant": "소유자 점유",
+  "flags": [],
+  "spec": {
+    "notExtinguished": "해당사항 없음",
+    "remarks": ""
+  },
+  "marketPrice": {
+    "low": 345600000,
+    "mid": 360000000,
+    "high": 374400000,
+    "source": "예시"
+  },
+  "costs": {
+    "evictionCost": 3000000,
+    "repairCost": 10000000,
+    "unpaidMgmtFee": 2000000,
+    "monthlyHoldingCost": 300000
+  },
+  "summary": "소유자 점유, 말소기준 근저당 이후 권리 모두 소멸",
+  "sources": {
+    "list": "샘플",
+    "spec": "샘플"
+  },
+  "rentMarket": {
+    "jeonse": 234000000,
+    "monthlyDeposit": 30000000,
+    "monthlyRent": 1000000,
+    "source": "예시"
+  },
+  "outcome": {
+    "result": "낙찰",
+    "winningBid": 281500000,
+    "bidders": 5,
+    "date": "2026-07-12"
+  }
+}

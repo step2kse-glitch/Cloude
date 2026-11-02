@@ -2,12 +2,12 @@
   "_sample": "가상의 연습용 물건 (실제 사건 아님)",
   "caseNo": "2099타경10001",
   "court": "수원지방법원",
-  "saleDate": "2099-11-20",
+  "saleDate": "2026-11-20",
   "usage": "아파트",
   "address": "경기도 화성시 가상동 (예시)",
   "areaM2": 84.9,
   "appraisal": 520000000,
-  "appraisalDate": "2099-05-10",
+  "appraisalDate": "2026-05-10",
   "minPrice": 364000000,
   "failCount": 1,
   "depositRate": 0.1,
@@ -27,7 +27,7 @@
     },
     {
       "type": "경매개시결정",
-      "date": "2099-04-01",
+      "date": "2026-04-01",
       "holder": "가상은행"
     }
   ],
@@ -66,5 +66,32 @@
     "school": "예시: 초등학교 도보 7분",
     "living": "예시: 대형마트·공원 인접",
     "score": 4
-  }
+  },
+  "distributionDeadline": "2026-06-20",
+  "auctionComps": [
+    {
+      "caseNo": "예시 2099타경09001",
+      "date": "2026-08-10",
+      "appraisal": 510000000,
+      "winningBid": 383000000,
+      "bidders": 7,
+      "source": "예시: 같은 단지 최근 낙찰"
+    },
+    {
+      "caseNo": "예시 2099타경08012",
+      "date": "2026-06-02",
+      "appraisal": 530000000,
+      "winningBid": 401000000,
+      "bidders": 9,
+      "source": "예시: 인근 단지"
+    },
+    {
+      "caseNo": "예시 2099타경07155",
+      "date": "2026-03-15",
+      "appraisal": 500000000,
+      "winningBid": 372000000,
+      "bidders": 5,
+      "source": "예시: 인근 단지"
+    }
+  ]
 }
