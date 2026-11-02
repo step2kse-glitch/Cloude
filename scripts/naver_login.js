@@ -26,7 +26,7 @@ const { launch, sleep } = require('./lib/common');
 
   await page.goto('https://blog.naver.com/GoBlogWrite.naver');
   await sleep(3000);
-  console.log('✅ 로그인 세션 저장 완료 (naver-profile/). 이 폴더는 외부 공유 금지.');
+  console.log(`✅ 로그인 세션 저장 완료 (${require('path').basename(require('./lib/common').PROFILE_DIR)}/). 이 폴더는 외부 공유 금지.`);
   await context.close();
 })().catch((e) => {
   console.error('❌ 오류:', e.message);

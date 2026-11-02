@@ -45,6 +45,8 @@ function jobPrompt(kind, p) {
       return `/auction 교차검증 ${p.caseNo}${NONINTERACTIVE}`;
     case 'content':
       return `/auction 콘텐츠 ${p.caseNo} ${p.type || 'blog'}${NONINTERACTIVE}`;
+    case 'blog':
+      return `/auction 블로그 ${p.caseNo} — 초안 ${p.file} 의 글을 다듬기만 하고 임시저장은 하지 마라(사용자가 화면에서 승인 후 저장)${NONINTERACTIVE}`;
     default:
       return null;
   }
@@ -88,6 +90,35 @@ function startJob(kind, params) {
     } catch (e) {
       append(`\n재평가 오류: ${e.message}`);
     }
+  });
+  return job;
+}
+
+// 블로그 임시저장·네이버 로그인처럼 AI 없이 도는 작업
+const PROFILES = { main: 'naver-profile', auction: 'naver-profile-auction' };
+const blogProfile = () => PROFILES[geo.readLocal().blogTarget] || PROFILES.main;
+function startProcess(kind, script, args, params = {}) {
+  if ([...jobs.values()].some((j) => j.status === 'running')) return { status: 'failed', log: '다른 작업이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.' };
+  const id = `${Date.now().toString(36)}-${kind}`;
+  const job = { id, kind, params, status: 'running', startedAt: new Date().toISOString(), log: '' };
+  jobs.set(id, job);
+  fs.mkdirSync(JOBS_DIR, { recursive: true });
+  const logFile = path.join(JOBS_DIR, `${id}.log`);
+  const child = spawn(process.execPath, [path.join(PATHS.root, script), ...args], { cwd: PATHS.root, env: { ...process.env, NAVER_PROFILE: blogProfile() } });
+  const append = (d) => {
+    job.log += d.toString();
+    fs.appendFileSync(logFile, d);
+  };
+  child.stdout.on('data', append);
+  child.stderr.on('data', append);
+  child.on('error', (e) => {
+    job.status = 'failed';
+    append(`\n실행 오류: ${e.message}`);
+  });
+  child.on('close', (code) => {
+    // naver_draft 는 텍스트 대조 불일치(❌)면 성공으로 보지 않는다
+    job.status = code === 0 && !/텍스트대조[^\n]*❌/.test(job.log) ? 'done' : 'failed';
+    job.endedAt = new Date().toISOString();
   });
   return job;
 }
@@ -147,6 +178,7 @@ function state() {
     jobs: [...jobs.values()].map(({ log, ...j }) => j).reverse().slice(0, 20),
     claude: !!claudeBin(),
     hasKakaoKey: !!geo.readLocal().kakaoRestKey,
+    blog: { target: geo.readLocal().blogTarget || 'main', profile: blogProfile(), loggedIn: fs.existsSync(path.join(PATHS.root, blogProfile())) },
     recipeVerified: !!readJson(path.join(PATHS.config, 'recipe.json')).verified,
     reports: fs.existsSync(PATHS.reports) ? fs.readdirSync(PATHS.reports).filter((f) => f.endsWith('.html')).sort().reverse().slice(0, 10) : [],
   };
@@ -288,7 +320,8 @@ async function route(req, res, url) {
   }
   if (req.method === 'POST' && p === '/api/local-settings') {
     const b = await readBody(req);
-    geo.writeLocal({ kakaoRestKey: (b.kakaoRestKey || '').trim() || null });
+    if ('kakaoRestKey' in b) geo.writeLocal({ kakaoRestKey: (b.kakaoRestKey || '').trim() || null });
+    if (b.blogTarget) geo.writeLocal({ blogTarget: b.blogTarget === 'auction' ? 'auction' : 'main' });
     return send(res, 200, state());
   }
   if (req.method === 'POST' && p === '/api/settings') {
@@ -324,6 +357,26 @@ async function route(req, res, url) {
     const polished = path.join(CONTENT_DIR, `${c._id}-${type}.md`);
     const draft = content.build(c, type);
     return send(res, 200, { type, title: draft.title, text: content.toText(type, draft), polished: fs.existsSync(polished) ? fs.readFileSync(polished, 'utf8') : null });
+  }
+  if (req.method === 'POST' && (x = m(/^\/api\/blog\/([^/]+)$/))) {
+    const c = store.get(decodeURIComponent(x[1]));
+    if (!c || !c.result) return send(res, 404, { error: '분석된 물건이 아니에요' });
+    const blog = require('./blogpost');
+    const d = await blog.createDraft(c);
+    return send(res, 200, { file: d.rel, draft: d.draft, stats: blog.stats(d.draft), images: d.images.map((i) => ({ ...i, url: '/' + i.path })) });
+  }
+  if (req.method === 'POST' && p === '/api/blog-save') {
+    const b = await readBody(req);
+    if (!/^drafts\/\d{8}-auction-[\w가-힣-]+\.json$/.test(b.file || '') || !fs.existsSync(path.join(PATHS.root, b.file))) return send(res, 400, { error: '초안 파일이 없어요' });
+    if (!fs.existsSync(path.join(PATHS.root, blogProfile()))) return send(res, 400, { error: '네이버 로그인이 먼저 필요해요 (설정 → 네이버 블로그)' });
+    return send(res, 200, startProcess('blogsave', 'scripts/naver_draft.js', [b.file], { file: b.file, caseNo: b.caseNo }));
+  }
+  if (req.method === 'POST' && p === '/api/naver-login') {
+    return send(res, 200, startProcess('naverlogin', 'scripts/naver_login.js', []));
+  }
+  if (req.method === 'GET' && (x = m(/^\/drafts\/auction\/(.+\.png)$/))) {
+    const f = safeJoin(path.join(PATHS.root, 'drafts', 'auction'), x[1]);
+    return f ? serveFile(res, f) : send(res, 403, { error: '금지' });
   }
   if (req.method === 'POST' && p === '/api/jobs') {
     const b = await readBody(req);
