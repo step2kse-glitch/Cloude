@@ -2,12 +2,12 @@
   "_sample": "가상의 연습용 물건 (실제 사건 아님) — 대항력 있는 임차인이 배당요구, 일부 미배당",
   "caseNo": "2099타경10002",
   "court": "수원지방법원",
-  "saleDate": "2099-11-27",
+  "saleDate": "2026-11-27",
   "usage": "아파트",
   "address": "경기도 화성시 예시동 (예시)",
   "areaM2": 59.9,
   "appraisal": 400000000,
-  "appraisalDate": "2099-05-02",
+  "appraisalDate": "2026-05-02",
   "minPrice": 196000000,
   "failCount": 2,
   "depositRate": 0.1,
@@ -26,7 +26,7 @@
     },
     {
       "type": "경매개시결정",
-      "date": "2099-03-20",
+      "date": "2026-03-20",
       "holder": "가상저축은행"
     }
   ],
@@ -74,5 +74,24 @@
     "school": "예시: 초등학교 도보 12분",
     "living": "예시: 상가 적음",
     "score": 3
-  }
+  },
+  "distributionDeadline": "2026-06-01",
+  "auctionComps": [
+    {
+      "caseNo": "예시 2099타경09333",
+      "date": "2026-07-21",
+      "appraisal": 390000000,
+      "winningBid": 255000000,
+      "bidders": 4,
+      "source": "예시: 같은 단지"
+    },
+    {
+      "caseNo": "예시 2099타경08777",
+      "date": "2026-05-11",
+      "appraisal": 410000000,
+      "winningBid": 270000000,
+      "bidders": 6,
+      "source": "예시: 인근"
+    }
+  ]
 }

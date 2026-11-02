@@ -2,12 +2,12 @@
   "_sample": "가상의 연습용 물건 (실제 사건 아님) — 선순위 가처분",
   "caseNo": "2099타경10003",
   "court": "수원지방법원",
-  "saleDate": "2099-12-04",
+  "saleDate": "2026-12-04",
   "usage": "다세대",
   "address": "경기도 화성시 연습동 (예시)",
   "areaM2": 49.5,
   "appraisal": 210000000,
-  "appraisalDate": "2099-04-20",
+  "appraisalDate": "2026-04-20",
   "minPrice": 102900000,
   "failCount": 2,
   "depositRate": 0.1,
@@ -15,7 +15,7 @@
   "registry": [
     { "type": "처분금지가처분", "date": "2018-01-10", "holder": "개인" },
     { "type": "근저당", "date": "2019-07-01", "holder": "가상캐피탈", "amount": 150000000 },
-    { "type": "경매개시결정", "date": "2099-02-11", "holder": "가상캐피탈" }
+    { "type": "경매개시결정", "date": "2026-02-11", "holder": "가상캐피탈" }
   ],
   "tenants": [],
   "tenantsUnknown": true,

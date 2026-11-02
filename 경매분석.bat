@@ -2,7 +2,7 @@
 chcp 65001 >nul
 cd /d "%~dp0"
 echo ==========================================
-echo  법원경매 AI 분석
+echo  내 경매 비서
 echo ==========================================
 where node >nul 2>nul
 if errorlevel 1 (
@@ -15,9 +15,8 @@ if not exist node_modules (
   call npm install || goto :fail
   call npx playwright install chromium || goto :fail
 )
-echo 처음이면 채팅에 데모 라고 쳐서 샘플 리포트부터 보세요.
-echo 예) 화성 아파트 5억 이하 투자 / 동탄 실거주 내 집 찾기
-call claude "/auction"
+echo 브라우저가 자동으로 열려요. 이 창을 닫으면 화면도 꺼져요.
+node auction\src\cli.js web
 pause
 exit /b 0
 :fail

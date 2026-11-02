@@ -46,12 +46,14 @@ function caseSection(c, r, n) {
   out.push(`### ${n}. ${c.caseNo} — ${GRADE_LABEL[r.grade]}`);
   out.push(`> ${r.reasons.join(' · ')}`);
   if (c._sample) out.push(`> 🧪 ${c._sample}`);
+  if (r.tags && r.tags.length) out.push(`태그: ${r.tags.map((t) => '#' + t.text).join(' ')}`);
   out.push(
     [
       `- 법원: ${c.court || '-'} / 매각기일: **${c.saleDate || '❓'}**`,
       `- 물건: ${c.usage || '-'} ${c.areaM2 ? c.areaM2 + '㎡' : ''} · ${c.address || '-'}`,
       `- 감정가 ${won(c.appraisal)} (${c.appraisalDate || '감정일 ❓'}) → 최저가 **${won(c.minPrice)}** (${pct(k.minPriceRatio)}, 유찰 ${c.failCount ?? '?'}회)`,
       c.summary ? `- 한 줄 요약: ${c.summary}` : null,
+      c.outcome && c.outcome.result ? `- 결과 기록: **${c.outcome.result}**${c.outcome.winningBid ? ` ${won(c.outcome.winningBid)} (감정가 대비 ${pct(c.outcome.winningBid / c.appraisal)}${c.outcome.bidders ? `, ${c.outcome.bidders}명 입찰` : ''})` : ''}${c.outcome.won ? ' · 🎉 내가 낙찰' : ''}` : null,
     ]
       .filter(Boolean)
       .join('\n')
@@ -81,6 +83,26 @@ function caseSection(c, r, n) {
     out.push(`시세 근거: 보수 ${eok(k.market.low)} · 기준 ${eok(k.market.mid)} · 낙관 ${eok(k.market.high)} — ${k.market.source || '❗출처 미기재'}`);
   } else {
     out.push(`#### 💰 입찰가\n${k.verdict}`);
+  }
+
+  // 경쟁 (낙찰가율)
+  const cp = r.competition;
+  if (cp) {
+    out.push('#### 🏁 경쟁 — 비슷한 물건 낙찰가율');
+    if (cp.status !== 'ok') out.push(`ℹ ${cp.note}`);
+    else {
+      out.push(`비슷한 물건 ${cp.count}건 평균 낙찰가율 **${pct(cp.avgRatio)}** (${pct(cp.minRatio)}~${pct(cp.maxRatio)}) → 예상 낙찰가 **${won(cp.expectedWinningBid)}**`);
+      if (cp.chance) out.push(`- ${cp.chance === '낮음' ? '❗' : cp.chance === '보통' ? '⚠' : '✅'} 추천가 낙찰 가능성: **${cp.chance}** — ${cp.advice}`);
+      out.push(table(['사례', '날짜', '낙찰가율', '낙찰가', '입찰자', '출처'], cp.comps.map((x) => [x.caseNo, x.date, pct(x.ratio), won(x.winningBid), x.bidders ?? '-', x.source])));
+    }
+  }
+
+  // 교차검증
+  const vf = r.verification;
+  if (vf) {
+    out.push('#### 🔍 교차검증 (서류를 두 번 따로 읽어 대조)');
+    out.push(vf.ok ? `- ✅ ${vf.total}개 항목 모두 일치` : `- ❗ ${vf.total}개 중 ${vf.mismatches}개 불일치 — 원문 서류로 다시 확인`);
+    if (!vf.ok) out.push(table(['항목', '1차', '2차'], vf.rows.filter((x) => !x.ok).map((x) => [x.field, x.first, x.second])));
   }
 
   // 명도
@@ -181,7 +203,8 @@ function buildMarkdown(cases, criteria, meta = {}) {
 }
 
 // 최소 Markdown → HTML (제목·표·목록·인용·굵게·details)
-function toHtml(md, title) {
+// Markdown → HTML 조각 (웹 화면에서도 사용)
+function mdToFragment(md) {
   const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   const lines = md.split('\n');
@@ -214,6 +237,11 @@ function toHtml(md, title) {
       html.push(`<p>${inline(l)}</p>`);
     }
   }
+  return html.join('\n');
+}
+
+function toHtml(md, title) {
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title>
 <style>
 :root{--bg:#fafaf8;--fg:#1d1d1b;--mute:#6b6b66;--line:#e2e1dc;--card:#fff;--accent:#2f5d50;--warn:#9a3b1e}
@@ -224,7 +252,7 @@ blockquote{margin:8px 0;padding:8px 12px;border-left:3px solid var(--accent);bac
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}table{border-collapse:collapse;min-width:100%;background:var(--card);font-size:13.5px}
 th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top;white-space:nowrap}td:last-child{white-space:normal;min-width:180px}
 th{background:var(--bg)}li.base{list-style:none;margin:6px 0 6px -18px;padding:6px 10px;background:var(--card);border:2px solid var(--accent);border-radius:6px}li.bad{color:var(--warn)}li.warn{color:var(--warn);opacity:.85}li.q{color:var(--mute)}details{margin:8px 0}summary{cursor:pointer;color:var(--mute)}strong{color:var(--fg)}
-</style></head><body>${html.join('\n')}</body></html>`;
+</style></head><body>${mdToFragment(md)}</body></html>`;
 }
 
 function writeReport(cases, criteria, outDir, meta = {}) {
@@ -238,4 +266,4 @@ function writeReport(cases, criteria, outDir, meta = {}) {
   return { md: base + '.md', html: base + '.html' };
 }
 
-module.exports = { buildMarkdown, writeReport, toHtml };
+module.exports = { buildMarkdown, writeReport, toHtml, mdToFragment, caseSection, sortCases, GRADE_LABEL };

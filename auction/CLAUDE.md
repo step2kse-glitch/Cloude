@@ -15,6 +15,13 @@
 | `calc.js` | 취득세·이자·필요현금·입찰가(보수/추천/상한)·예산 |
 | `strategy.js` | 매도 / 전세 / 월세 / 실거주 비교와 추천 |
 | `rights-view.js` | 권리관계 보기: 쉽게 말하면 · 날짜순 타임라인(말소기준 선) · 권리 체크리스트 · 한 줄 라벨 |
+| `tags.js` | 위험·특징 태그 (#대항력있는임차인 #재매각 …) |
+| `competition.js` | 비슷한 물건 낙찰가율 → 예상 낙찰가·추천가 낙찰 가능성 |
+| `outcomes.js` | 내 추천가 vs 실제 낙찰가 적중률 (±5/10/15/20%, 치우침) |
+| `calendar.js` | 물건별 일정 + .ics 내보내기 |
+| `verify.js` | 교차검증: `<id>.check.json`(독립 2차 추출)과 비교 |
+| `content.js` | 블로그·쇼츠·롱폼 사실 초안 (개인정보 제거) |
+| `store.js` · `server.js` · `web/` | 케이스 저장소 · 로컬 웹 서버 · 화면 |
 | `evaluate.js` | 위를 묶고 등급(A/B/C/X/보류) |
 | `report.js` | 리포트 md + html |
 
@@ -33,6 +40,8 @@ auction/workspace/      raw(수집 원본) · cases(물건 JSON) · reports(리�
 ```
 
 ## 명령
+
+웹 화면(가장 쉬움): `node auction/src/cli.js web` (같은 와이파이 핸드폰: `--lan`) — 화면의 AI 버튼은 `claude -p "/auction …"` 을 실행한다(구독 사용, API 키 없음).
 
 ```
 node auction/src/cli.js demo                샘플로 전체 흐름 → workspace/demo/*.html
@@ -72,6 +81,9 @@ npm run auction:test                         규칙 수정 후 반드시 실행
 | costs {evictionCost,repairCost,unpaidMgmtFee,monthlyHoldingCost,extraAssumed} | 임장·추정 | evictionCost 비우면 명도 계획 추정치 사용 |
 | homeFit {commute,school,living,score} | 실거주 모드 | knowledge/home-finding.md |
 | summary, questions[] | Claude | 한 줄 요약, 확인 필요 |
+| auctionComps[] {caseNo,date,appraisal,winningBid,bidders,source} | 법원 매각결과·검색 | 같은 단지·인근 최근 낙찰 사례, 출처 필수 |
+| outcome {result,winningBid,bidders,date,myBid,won} | 사용자 기록 | 입찰일 이후 결과 (적중률·낙찰 후 일정) |
+| watch, memo | 사용자 (웹 화면) | 관심물건, 임장 메모 |
 
 ## 순회 방식
 
