@@ -82,3 +82,20 @@ test('콘텐츠: 주소는 동까지만, 면책 문구 포함', () => {
     assert.match(text, /투자 권유|자문/);
   }
 });
+
+test('주소 정리: 동·층·호 제거, 지번·도로명 번호까지', () => {
+  const { cleanAddress } = require('../src/geocode');
+  assert.strictEqual(cleanAddress('경기도 고양시 덕양구 내유동 738-1 진흥타운 4층402호'), '경기도 고양시 덕양구 내유동 738-1');
+  assert.strictEqual(cleanAddress('서울특별시 영등포구 도림천로19길 12, 제9층 제901호 (대림동, 유탑유블레스)'), '서울특별시 영등포구 도림천로19길 12');
+  assert.strictEqual(cleanAddress('경기도 가평군 가평읍 금대리 산52'), '경기도 가평군 가평읍 금대리 산52');
+});
+
+test('위치 찾기: 정확한 주소 실패 시 동네 단위로 줄여 찾고 대략 표시', async () => {
+  const { geocode } = require('../src/geocode');
+  const seen = [];
+  const finder = async (q) => (seen.push(q), q.endsWith('내유동') ? { lat: 37.7, lng: 126.9 } : null);
+  const g = await geocode('경기도 고양시 덕양구 내유동 738-1 진흥타운 4층402호', { finder });
+  assert.deepStrictEqual(seen, ['경기도 고양시 덕양구 내유동 738-1', '경기도 고양시 덕양구 내유동']);
+  assert.strictEqual(g.approx, true);
+  assert.strictEqual(g.lat, 37.7);
+});

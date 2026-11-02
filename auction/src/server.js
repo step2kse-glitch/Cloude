@@ -14,6 +14,7 @@ const calendar = require('./calendar');
 const outcomes = require('./outcomes');
 const content = require('./content');
 const { affordableBid } = require('./calc');
+const geo = require('./geocode');
 
 const WEB = path.join(PATHS.auction, 'web');
 const JOBS_DIR = path.join(PATHS.workspace, 'jobs');
@@ -21,7 +22,7 @@ const CONTENT_DIR = path.join(PATHS.workspace, 'content');
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.md': 'text/markdown; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 // 케이스 JSON 중 화면에서 고칠 수 있는 필드 (나머지는 AI가 서류에서 옮긴 사실이라 고급 편집에서만)
-const EDITABLE = ['marketPrice', 'rentMarket', 'costs', 'homeFit', 'outcome', 'auctionComps', 'questions', 'summary', 'watch', 'memo', 'trend', 'buyer', 'exit', 'goal'];
+const EDITABLE = ['geo', 'marketPrice', 'rentMarket', 'costs', 'homeFit', 'outcome', 'auctionComps', 'questions', 'summary', 'watch', 'memo', 'trend', 'buyer', 'exit', 'goal'];
 
 // ---------- AI 작업 (claude -p, 구독 사용 · API 키 없음) ----------
 const jobs = new Map();
@@ -124,6 +125,8 @@ function summary(c) {
     watch: !!c.watch,
     sample: !!c._sample,
     outcome: c.outcome || null,
+    geo: c.geo || null,
+    searchAddress: geo.cleanAddress(c.address),
   };
 }
 
@@ -143,6 +146,7 @@ function state() {
     stats: outcomes.stats(cases),
     jobs: [...jobs.values()].map(({ log, ...j }) => j).reverse().slice(0, 20),
     claude: !!claudeBin(),
+    hasKakaoKey: !!geo.readLocal().kakaoRestKey,
     recipeVerified: !!readJson(path.join(PATHS.config, 'recipe.json')).verified,
     reports: fs.existsSync(PATHS.reports) ? fs.readdirSync(PATHS.reports).filter((f) => f.endsWith('.html')).sort().reverse().slice(0, 10) : [],
   };
@@ -246,6 +250,46 @@ async function route(req, res, url) {
   if (req.method === 'DELETE' && (x = m(/^\/api\/case\/([^/]+)$/))) {
     store.remove(decodeURIComponent(x[1]));
     return send(res, 200, { ok: true });
+  }
+  if (req.method === 'POST' && (x = m(/^\/api\/case\/([^/]+)\/geocode$/))) {
+    const id = decodeURIComponent(x[1]);
+    const c = store.get(id);
+    if (!c) return send(res, 404, { error: '물건 없음' });
+    if (!c.address) return send(res, 400, { error: '주소가 없어요 — 지도를 눌러 직접 찍어 주세요' });
+    let g;
+    try {
+      g = await geo.geocode(c.address);
+    } catch (e) {
+      return send(res, 502, { error: `위치 찾기 실패: ${e.message}` });
+    }
+    if (!g) return send(res, 404, { error: '주소로 위치를 못 찾았어요 — 지도를 눌러 직접 찍어 주세요' });
+    store.save({ ...c, geo: g, _id: id });
+    store.evaluateAll();
+    return send(res, 200, caseDetail(id));
+  }
+  if (req.method === 'POST' && p === '/api/geocode') {
+    // 위치 없는 물건 전부 (OSM 은 초당 1회라 천천히)
+    const todo = store.list().filter((c) => !c.geo && c.address);
+    let found = 0;
+    const failed = [];
+    for (const c of todo) {
+      try {
+        const g = await geo.geocode(c.address);
+        if (g) {
+          store.save({ ...c, geo: g });
+          found++;
+        } else failed.push(c.caseNo);
+      } catch (e) {
+        failed.push(`${c.caseNo}(${e.message})`);
+      }
+    }
+    store.evaluateAll();
+    return send(res, 200, { found, failed, state: state() });
+  }
+  if (req.method === 'POST' && p === '/api/local-settings') {
+    const b = await readBody(req);
+    geo.writeLocal({ kakaoRestKey: (b.kakaoRestKey || '').trim() || null });
+    return send(res, 200, state());
   }
   if (req.method === 'POST' && p === '/api/settings') {
     const b = await readBody(req);
