@@ -9,6 +9,7 @@
 //   node auction/src/cli.js new <사건번호>       빈 케이스 파일 만들기
 //   node auction/src/cli.js verify <id>          <id>.check.json(두 번째 추출본)과 교차검증
 //   node auction/src/cli.js content <id> [blog|shorts|longform]  콘텐츠 사실 초안 출력
+//   node auction/src/cli.js blog <id>            네이버 블로그 초안(JSON+카드 이미지) 만들기 — 임시저장은 승인 후 naver_draft.js
 //   node auction/src/cli.js ics [--all]          관심물건(또는 전체) 일정 → workspace/auction.ics
 const fs = require('fs');
 const path = require('path');
@@ -130,6 +131,19 @@ function main() {
       console.log(content.toText(type, content.build(c, type)));
       break;
     }
+    case 'blog': {
+      const c = store.get(args[0]);
+      if (!c || !c.result) return console.log('분석된 케이스 id 를 주세요 (evaluate 먼저)');
+      const blog = require('./blogpost');
+      blog.createDraft(c).then(({ rel, draft, images }) => {
+        const st = blog.stats(draft);
+        console.log(blog.preview(draft));
+        console.log(`\n— 제목 ${st.titleLen}자 · 본문 ${st.chars}자 · 이미지 ${st.images}장 · 인용구 ${st.quotes}개 · 키워드 "${draft.mainKeyword}" ${st.keywordCount}회`);
+        console.log(`📝 초안: ${rel} (카드 ${images.length}장)`);
+        console.log(`   승인 후 임시저장: ${process.env.NAVER_PROFILE ? `NAVER_PROFILE=${process.env.NAVER_PROFILE} ` : ''}node scripts/naver_draft.js ${rel}`);
+      });
+      break;
+    }
     case 'ics': {
       const out = path.join(PATHS.workspace, 'auction.ics');
       fs.writeFileSync(out, calendar.toIcs(store.list(), { onlyWatched: !args.includes('--all') }));
@@ -142,7 +156,7 @@ function main() {
       break;
     }
     default:
-      console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(1, 12).join('\n').replace(/^\/\/ ?/gm, ''));
+      console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(1, 13).join('\n').replace(/^\/\/ ?/gm, ''));
   }
 }
 

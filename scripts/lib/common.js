@@ -4,7 +4,12 @@ const fs = require('fs');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const PROFILE_DIR = path.join(ROOT, 'naver-profile');
+// 기본은 살림 블로그 세션(naver-profile). 경매 글을 다른 블로그로 보낼 땐 NAVER_PROFILE=naver-profile-auction
+// (명령줄 --profile=naver-profile-auction 도 가능)
+const PROFILE_ARG = (process.argv.find((a) => a.startsWith('--profile=')) || '').slice('--profile='.length);
+const PROFILE_WANTED = PROFILE_ARG || process.env.NAVER_PROFILE || '';
+const PROFILE_NAME = /^naver-profile[\w-]*$/.test(PROFILE_WANTED) ? PROFILE_WANTED : 'naver-profile';
+const PROFILE_DIR = path.join(ROOT, PROFILE_NAME);
 const WRITE_URL = 'https://blog.naver.com/GoBlogWrite.naver';
 const VIEWPORT = { width: 1600, height: 1000 };
 

@@ -223,7 +223,7 @@ function afterJob(job) {
     return;
   }
   if (job.status === 'failed') return toast(job.log || '작업을 시작하지 못했어요');
-  toast('AI 작업을 시작했어요 — 🤖 AI 작업 화면에서 진행 상황을 볼 수 있어요', 3500);
+  toast(job.kind === 'blogsave' ? '컴퓨터의 크롬에서 임시저장 중이에요 (1~3분) — 끝나면 알려드릴게요' : job.kind === 'naverlogin' ? '컴퓨터에 뜬 크롬 창에서 네이버에 로그인해 주세요 (5분 안에)' : 'AI 작업을 시작했어요 — 🤖 AI 작업 화면에서 진행 상황을 볼 수 있어요', 4000);
   watchJob(job.id);
 }
 
@@ -236,7 +236,8 @@ function watchJob(id) {
     if (!j || j.status === 'running') return setTimeout(tick, 3000);
     watching.delete(id);
     await load();
-    toast(j.status === 'done' ? '✅ AI 작업이 끝났어요' : '❌ AI 작업이 실패했어요 — AI 작업 화면에서 기록을 확인하세요', 4000);
+    const ok = { blogsave: '✅ 네이버 임시저장 완료 — 네이버 블로그 앱 → 임시저장 글에서 확인 후 발행하세요', naverlogin: '✅ 네이버 로그인 완료' }[j.kind] || '✅ AI 작업이 끝났어요';
+    toast(j.status === 'done' ? ok : '❌ 작업이 실패했어요 — 🤖 AI 작업 화면에서 기록을 확인하세요', 6000);
     render();
   };
   setTimeout(tick, 3000);
@@ -420,7 +421,7 @@ async function viewCase(id) {
     <div class="row" style="margin-top:0.625rem">
       <button class="btn sm" data-job="analyze">🤖 AI 재분석</button>
       <button class="btn sm" data-job="verify">🔍 교차검증</button>
-      <a class="btn sm" href="#/content/${encodeURIComponent(s.id)}">✍️ 콘텐츠</a>
+      <a class="btn sm" href="#/content/${encodeURIComponent(s.id)}">📝 블로그 글</a>
       <span class="dday" style="margin-left:auto">${ddayText(s.dday)}</span>
     </div>
   </div>
@@ -677,8 +678,14 @@ async function viewContent(id) {
   const T = [['blog', '📝 블로그 글'], ['shorts', '📱 유튜브 쇼츠'], ['longform', '🎬 유튜브 롱폼']];
   return `
   <h1>✍️ 콘텐츠 만들기</h1>
-  <p class="sub">분석한 물건을 블로그 글·유튜브 원고로 바꿔요. 주소의 동·호수와 개인정보는 자동으로 빠져요.</p>
+  <p class="sub">분석한 물건을 네이버 블로그 글·유튜브 원고로 바꿔요. 주소의 동·호수와 개인정보는 자동으로 빠져요.</p>
   <div class="field"><label>물건</label><select id="pick">${analyzed.map((c) => `<option value="${esc(c.id)}" ${c.id === cur ? 'selected' : ''}>[${esc(c.grade)}] ${esc(c.caseNo)} ${esc(c.usage || '')}${c.sample ? ' (샘플)' : ''}</option>`).join('')}</select></div>
+  <div class="card" style="margin-bottom:0.75rem"><h3 style="margin-top:0">📝 네이버 블로그에 올리기</h3>
+    <p class="sub">분석 카드 이미지 5장과 글을 만들어 <b>네이버 블로그 임시저장</b>까지 해요. 발행 버튼은 네이버 앱에서 직접 눌러 주세요.</p>
+    <p class="sub" style="margin:0 0 0.5rem">올릴 블로그: <b>${S.blog.target === 'auction' ? '경매 전용 블로그' : '살림 블로그(기본 로그인)'}</b> · ${S.blog.loggedIn ? '✅ 로그인됨' : '❗ 로그인 필요'} <a href="#/settings">바꾸기</a></p>
+    <button class="btn primary" id="mkBlog">📝 블로그 초안 만들기</button>
+    <div id="blogOut"></div>
+  </div>
   <div class="chips">${T.map(([k, l]) => `<button class="chip ${contentState.type === k ? 'on' : ''}" data-type="${k}">${l}</button>`).join('')}</div>
   ${d.error ? `<p class="warnbox">${esc(d.error)}</p>` : `
   <div class="row between"><h3>사실 뼈대 초안</h3><div class="row"><button class="btn sm" data-copy="draft">복사</button><button class="btn sm primary" data-polish>🤖 AI로 자연스럽게 다듬기</button></div></div>
@@ -687,6 +694,53 @@ async function viewContent(id) {
   <p class="note" style="margin-top:0.75rem">발행은 직접 해주세요. 경매 콘텐츠에는 "투자 권유·법률 자문 아님" 문구를 꼭 남겨 두세요.</p>`}`;
 }
 function bindContent(root) {
+  const mk = $('#mkBlog', root);
+  if (mk)
+    mk.onclick = async () => {
+      mk.disabled = true;
+      mk.textContent = '카드 이미지 만드는 중…';
+      const id = $('#pick', root).value;
+      const c = S.cases.find((x) => x.id === id);
+      try {
+        const d = await api(`/api/blog/${encodeURIComponent(id)}`, { method: 'POST', body: {} });
+        const st = d.stats;
+        const blocks = d.draft.blocks
+          .map((b) =>
+            b.type === 'text'
+              ? `<p style="white-space:pre-wrap;margin:0.5rem 0">${esc(b.text)}</p>`
+              : b.type === 'subtitle'
+                ? `<h3>${esc(b.text)}</h3>`
+                : b.type === 'quote'
+                  ? `<blockquote>${esc(b.text)}</blockquote>`
+                  : b.type === 'image'
+                    ? `<figure style="margin:0.75rem 0"><img src="${esc(b.path.startsWith('/') ? b.path : '/' + b.path)}" style="width:100%;border-radius:0.625rem;border:1px solid var(--line)"><figcaption class="sub">${esc(b.caption || '')}</figcaption></figure>`
+                    : '<hr>',
+          )
+          .join('');
+        $('#blogOut', root).innerHTML = `
+          <div class="note" style="margin-top:0.75rem">제목 ${st.titleLen}자 · 본문 ${st.chars.toLocaleString()}자 · 이미지 ${st.images}장 · 인용구 ${st.quotes}개 · 키워드 "${esc(d.draft.mainKeyword)}" ${st.keywordCount}회<br>태그: ${d.draft.tags.map((t) => '#' + esc(t)).join(' ')}</div>
+          <h2 style="margin-bottom:0.25rem">${esc(d.draft.title)}</h2>
+          <div class="pane" style="max-height:70vh;overflow:auto;border:1px solid var(--line);border-radius:0.75rem;padding:0 0.875rem">${blocks}</div>
+          <div class="row" style="margin-top:0.75rem">
+            <button class="btn primary" id="saveBlog">✅ 이대로 네이버에 임시저장</button>
+            ${S.claude ? '<button class="btn" id="polishBlog">🤖 AI가 글을 더 길고 자연스럽게</button>' : ''}
+          </div>
+          <p class="sub" style="margin-top:0.5rem">임시저장을 누르면 컴퓨터에 크롬이 잠깐 떠서 글·사진·태그를 넣고 저장해요(1~3분). 끝나면 네이버 블로그 앱 → 글쓰기 → 임시저장 글에서 확인하고 직접 발행하세요.</p>`;
+        $('#saveBlog', root).onclick = async () => {
+          try {
+            afterJob(await api('/api/blog-save', { method: 'POST', body: { file: d.file, caseNo: c && c.caseNo } }));
+          } catch (e) {
+            toast(e.message, 4000);
+          }
+        };
+        const pb = $('#polishBlog', root);
+        if (pb) pb.onclick = async () => afterJob(await api('/api/jobs', { method: 'POST', body: { kind: 'blog', caseNo: c.caseNo, file: d.file } }));
+      } catch (e) {
+        toast(e.message, 4000);
+      }
+      mk.disabled = false;
+      mk.textContent = '📝 블로그 초안 다시 만들기';
+    };
   const pick = $('#pick', root);
   if (pick) pick.onchange = () => (location.hash = `#/content/${encodeURIComponent(pick.value)}`);
   $$('[data-type]', root).forEach((b) => (b.onclick = () => ((contentState.type = b.dataset.type), render())));
@@ -715,7 +769,7 @@ async function viewJobs(id) {
   <div class="actions"><button class="action" data-act="search"><span class="ic">🔎</span><b>물건 찾기</b><small>조건으로 순회·분석</small></button><button class="action" data-act="add"><span class="ic">➕</span><b>사건번호 분석</b><small>한 건 깊게</small></button></div>
   ${j ? `<h2>작업 기록 — ${esc(j.kind)} (${esc(j.status)})</h2><pre class="log" id="log">${esc(j.log || '(아직 출력 없음)')}</pre>` : ''}
   <h2>최근 작업</h2>
-  ${S.jobs.length ? `<div class="card evlist">${S.jobs.map((x) => `<a class="e" href="#/jobs/${esc(x.id)}" style="text-decoration:none;color:inherit"><div class="d">${{ running: '⏳', done: '✅', failed: '❌', manual: '📋' }[x.status] || ''}</div><div><b>${esc({ search: '물건 찾기', analyze: '분석', update: '임장 반영', verify: '교차검증', content: '콘텐츠' }[x.kind] || x.kind)}</b> ${esc(x.params.caseNo || x.params.text || '')}<small>${esc(x.startedAt.replace('T', ' ').slice(0, 16))}</small></div></a>`).join('')}</div>` : '<div class="card empty">아직 실행한 작업이 없어요</div>'}`;
+  ${S.jobs.length ? `<div class="card evlist">${S.jobs.map((x) => `<a class="e" href="#/jobs/${esc(x.id)}" style="text-decoration:none;color:inherit"><div class="d">${{ running: '⏳', done: '✅', failed: '❌', manual: '📋' }[x.status] || ''}</div><div><b>${esc({ search: '물건 찾기', analyze: '분석', update: '임장 반영', verify: '교차검증', content: '콘텐츠', blog: '블로그 글 다듬기', blogsave: '네이버 임시저장', naverlogin: '네이버 로그인' }[x.kind] || x.kind)}</b> ${esc(x.params.caseNo || x.params.text || '')}<small>${esc(x.startedAt.replace('T', ' ').slice(0, 16))}</small></div></a>`).join('')}</div>` : '<div class="card empty">아직 실행한 작업이 없어요</div>'}`;
 }
 
 // ---------- 지도 ----------
@@ -874,6 +928,14 @@ function viewSettings() {
     <div class="field"><label>카카오 REST API 키 (선택)</label><input id="kakaoKey" placeholder="${S.hasKakaoKey ? '저장됨 — 바꾸려면 새 키 입력' : '예: 1a2b3c…'}" autocomplete="off"><small>developers.kakao.com → 내 애플리케이션 → 앱 키 → REST API 키 (무료). 이 컴퓨터에만 저장돼요.</small></div>
     <div class="row"><button class="btn" id="saveKey">키 저장</button>${S.hasKakaoKey ? '<button class="btn danger" id="delKey">키 지우기</button>' : ''}</div>
   </div>
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">📝 네이버 블로그</h3>
+    <div class="field"><label>경매 글을 어느 블로그에 올릴까요?</label><select id="blogTarget">
+      <option value="main" ${S.blog.target === 'main' ? 'selected' : ''}>지금 쓰는 블로그 (살림 블로그와 같은 로그인)</option>
+      <option value="auction" ${S.blog.target === 'auction' ? 'selected' : ''}>경매 전용 블로그 (다른 네이버 아이디)</option></select>
+      <small>살림 블로그에 경매 글이 섞이면 주제가 흐려져 검색 노출(C-Rank)에 불리할 수 있어요. 가능하면 경매 전용 블로그를 추천해요.</small></div>
+    <div class="row"><span>${S.blog.loggedIn ? '✅ 로그인되어 있어요' : '❗ 아직 로그인 전이에요'}</span><button class="btn" id="naverLogin">네이버 로그인${S.blog.loggedIn ? ' 다시 하기' : ''}</button></div>
+    <small class="sub">버튼을 누르면 컴퓨터에 크롬 창이 떠요. 직접 로그인하면 끝이에요(비밀번호는 저장 안 함).</small>
+  </div>
   <h2>🎯 내 조건</h2>
   <p class="sub">여기 값이 모든 물건의 입찰가·세금·추천에 쓰여요. 저장하면 전체가 다시 계산돼요.</p>
   <form id="settings">
@@ -952,6 +1014,12 @@ function bindSettings(root) {
   };
   const del = $('#delKey', root);
   if (del) del.onclick = () => saveKey('');
+  $('#blogTarget', root).onchange = async (e) => {
+    S = await api('/api/local-settings', { method: 'POST', body: { blogTarget: e.target.value } });
+    toast(e.target.value === 'auction' ? '경매 전용 블로그로 올려요 — 처음이면 네이버 로그인을 해 주세요' : '지금 쓰는 블로그로 올려요');
+    render();
+  };
+  $('#naverLogin', root).onclick = async () => afterJob(await api('/api/naver-login', { method: 'POST', body: {} }));
   $('#settings', root).onsubmit = async (e) => {
     e.preventDefault();
     const f = e.target;
