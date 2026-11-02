@@ -21,6 +21,7 @@
 | `calendar.js` | 물건별 일정 + .ics 내보내기 |
 | `verify.js` | 교차검증: `<id>.check.json`(독립 2차 추출)과 비교 |
 | `content.js` | 블로그·쇼츠·롱폼 사실 초안 (개인정보 제거) |
+| `geocode.js` | 주소 → 좌표 (카카오 키 있으면 카카오, 없으면 OpenStreetMap, 초당 1회) → 케이스 geo |
 | `store.js` · `server.js` · `web/` | 케이스 저장소 · 로컬 웹 서버 · 화면 |
 | `evaluate.js` | 위를 묶고 등급(A/B/C/X/보류) |
 | `report.js` | 리포트 md + html |
@@ -84,6 +85,7 @@ npm run auction:test                         규칙 수정 후 반드시 실행
 | auctionComps[] {caseNo,date,appraisal,winningBid,bidders,source} | 법원 매각결과·검색 | 같은 단지·인근 최근 낙찰 사례, 출처 필수 |
 | outcome {result,winningBid,bidders,date,myBid,won} | 사용자 기록 | 입찰일 이후 결과 (적중률·낙찰 후 일정) |
 | watch, memo | 사용자 (웹 화면) | 관심물건, 임장 메모 |
+| geo {lat,lng,source,approx,query} | 위치 찾기·직접 지정 | 지도 핀. 지어내지 말 것 — 찾기 실패면 비워 둠 |
 
 ## 순회 방식
 

@@ -93,5 +93,12 @@
       "bidders": 5,
       "source": "예시: 인근 단지"
     }
-  ]
+  ],
+  "geo": {
+    "lat": 37.2003,
+    "lng": 127.0738,
+    "source": "예시 좌표 (가상 물건)",
+    "approx": true,
+    "query": null
+  }
 }

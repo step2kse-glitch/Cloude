@@ -4,17 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>내 경매 비서</title>
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
 <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <header class="top">
   <a href="#/" class="brand">🏠 내 경매 비서</a>
   <nav class="side" id="nav"></nav>
+  <button class="fontbtn" id="fontBtn" title="글자 크기">가<small>가</small></button>
 </header>
 <main id="app"><p class="loading">불러오는 중…</p></main>
 <nav class="tabbar" id="tabbar"></nav>
 <div id="toast" class="toast" hidden></div>
 <div id="modal" class="modal" hidden><div class="sheet" id="sheet"></div></div>
+<script src="/vendor/leaflet/leaflet.js"></script>
 <script src="/app.js"></script>
 </body>
 </html>

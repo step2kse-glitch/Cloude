@@ -69,6 +69,32 @@ function modal(html, onMount) {
 }
 const closeModal = () => ($('#modal').hidden = true);
 
+// ---------- 화면 설정 (이 브라우저에만 저장) ----------
+const PREF_KEY = 'auction.prefs';
+function getPrefs() {
+  try {
+    return { fontScale: 1, theme: 'auto', ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') };
+  } catch {
+    return { fontScale: 1, theme: 'auto' };
+  }
+}
+function setPrefs(p) {
+  const next = { ...getPrefs(), ...p };
+  try {
+    localStorage.setItem(PREF_KEY, JSON.stringify(next));
+  } catch {}
+  applyPrefs(next);
+  return next;
+}
+function applyPrefs(p = getPrefs()) {
+  document.documentElement.style.fontSize = `${16 * p.fontScale}px`;
+  if (p.theme === 'auto') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = p.theme;
+}
+const FONT_STEPS = [0.9, 1, 1.15, 1.3, 1.5];
+const FONT_NAMES = { 0.9: '작게', 1: '보통', 1.15: '크게', 1.3: '아주 크게', 1.5: '최대' };
+applyPrefs();
+
 let S = null; // 서버 상태
 async function load() {
   S = await api('/api/state');
@@ -79,13 +105,14 @@ async function load() {
 const NAV = [
   ['#/', '🏠', '홈'],
   ['#/list', '📋', '물건'],
+  ['#/map', '🗺', '지도'],
   ['#/calendar', '📅', '일정'],
   ['#/lab', '🎯', '적중률'],
   ['#/content', '✍️', '콘텐츠'],
   ['#/jobs', '🤖', 'AI 작업'],
   ['#/settings', '⚙️', '설정'],
 ];
-const TABBAR = ['#/', '#/list', '#/calendar', '#/content', '#/settings'];
+const TABBAR = ['#/', '#/list', '#/map', '#/calendar', '#/settings'];
 function drawNav() {
   const cur = '#/' + (location.hash.slice(2).split('/')[0] || '');
   const on = (h) => (h === cur || (h === '#/' && cur === '#/') ? 'on' : '');
@@ -109,7 +136,7 @@ function caseCard(c) {
       </a>
       <button class="star ${c.watch ? 'on' : ''}" data-watch="${esc(c.id)}" title="관심물건">${c.watch ? '★' : '☆'}</button>
     </div>
-    <div style="margin-top:6px">${c.rightsLabel ? `<span class="tag">${esc(c.rightsLabel)}</span>` : ''}${tagChips(c.tags, 5)}</div>
+    <div style="margin-top:0.375rem">${c.rightsLabel ? `<span class="tag">${esc(c.rightsLabel)}</span>` : ''}${tagChips(c.tags, 5)}</div>
     <a class="nums" href="#/case/${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit">
       <div><small>최저가</small><b>${eok(c.minPrice)}</b> <small>${pct(c.minPriceRatio, 0)}</small></div>
       <div><small>${c.grade === 'X' ? '판정' : '추천 입찰가'}</small><b>${c.grade === 'X' ? '입찰 비추천' : eok(c.recommended)}</b></div>
@@ -139,7 +166,7 @@ function openSearch() {
     <p class="sub">원하는 조건을 말로 적어 주세요. AI가 법원경매 사이트를 돌며 물건을 모으고 분석해요.</p>
     <div class="field"><label>조건</label><input id="q" placeholder="예: 화성 아파트 5억 이하 투자" value="${esc([c.sigungu, c.usage, c.maxMinPrice ? eok(c.maxMinPrice) + ' 이하' : '', c.goal].filter(Boolean).join(' '))}"></div>
     ${S.recipeVerified ? '' : '<p class="warnbox">처음 한 번은 크롬 창이 뜨면 <b>직접 검색하고 관심 물건 상세 화면을 열어 주세요</b>. 다 보면 크롬을 닫으면 돼요. 다음부터는 AI가 혼자 돌아요.</p>'}
-    <div class="row" style="margin-top:12px"><button class="btn primary" id="go">AI에게 맡기기</button><button class="btn" data-close>취소</button></div>`,
+    <div class="row" style="margin-top:0.75rem"><button class="btn primary" id="go">AI에게 맡기기</button><button class="btn" data-close>취소</button></div>`,
     (el) =>
       ($('#go', el).onclick = async () => {
         const job = await api('/api/jobs', { method: 'POST', body: { kind: 'search', text: $('#q', el).value } });
@@ -156,7 +183,7 @@ function openAdd() {
     <div class="field"><label>사건번호</label><input id="no" placeholder="예: 2026타경12345"></div>
     <div class="field"><label>법원 (선택)</label><input id="court" placeholder="예: 수원지방법원"></div>
     <label class="check"><input type="checkbox" id="run" checked> 추가하고 바로 AI 분석 시작</label>
-    <div class="row" style="margin-top:12px"><button class="btn primary" id="go">추가</button><button class="btn" data-close>취소</button></div>`,
+    <div class="row" style="margin-top:0.75rem"><button class="btn primary" id="go">추가</button><button class="btn" data-close>취소</button></div>`,
     (el) =>
       ($('#go', el).onclick = async () => {
         try {
@@ -225,7 +252,7 @@ function viewHome() {
   const hasSample = cases.some((x) => x.sample);
 
   const onboarding = !cases.length
-    ? `<div class="card" style="margin-bottom:14px">
+    ? `<div class="card" style="margin-bottom:0.875rem">
         <h2 style="margin-top:0">처음 오셨군요 👋</h2>
         <ol class="steps">
           <li><div><b>내 조건 정하기</b><br><span class="sub">목적·현금·대출을 넣으면 입찰가와 세금이 내 상황에 맞춰져요</span><br><a class="btn sm" href="#/settings">설정 열기</a></div></li>
@@ -266,8 +293,8 @@ function viewHome() {
 
   <h2>앞으로 2주 <a class="btn sm" href="#/calendar" style="float:right">전체 일정</a></h2>
   <div class="week">${days.slice(0, 7).map(({ d, key, ev }) => `<div class="${ev.length ? 'has' : ''} ${key === S.today ? 'today' : ''}">${dayName[d.getDay()]}<b>${d.getDate()}</b>${ev.length ? ev.length + '건' : '—'}</div>`).join('')}</div>
-  <div class="week" style="margin-top:4px">${days.slice(7).map(({ d, ev }) => `<div class="${ev.length ? 'has' : ''}">${dayName[d.getDay()]}<b>${d.getDate()}</b>${ev.length ? ev.length + '건' : '—'}</div>`).join('')}</div>
-  <div class="card evlist" style="margin-top:10px">${
+  <div class="week" style="margin-top:0.25rem">${days.slice(7).map(({ d, ev }) => `<div class="${ev.length ? 'has' : ''}">${dayName[d.getDay()]}<b>${d.getDate()}</b>${ev.length ? ev.length + '건' : '—'}</div>`).join('')}</div>
+  <div class="card evlist" style="margin-top:0.625rem">${
     S.upcoming.length
       ? S.upcoming
           .slice(0, 6)
@@ -282,11 +309,11 @@ function viewHome() {
   ${
     cases.length
       ? `<h2>등급 분포</h2><div class="card">${['A', 'B', 'C', '보류', 'X']
-          .map((g) => `<div class="row" style="margin:6px 0">${gradeBadge(g)}<span style="width:70px">${GRADE_TEXT[g]}</span><div class="bar" style="flex:1"><i style="width:${cases.length ? ((counts[g] || 0) / cases.length) * 100 : 0}%"></i></div><b style="width:36px;text-align:right">${counts[g] || 0}</b></div>`)
+          .map((g) => `<div class="row" style="margin:0.375rem 0">${gradeBadge(g)}<span style="width:4.375rem">${GRADE_TEXT[g]}</span><div class="bar" style="flex:1"><i style="width:${cases.length ? ((counts[g] || 0) / cases.length) * 100 : 0}%"></i></div><b style="width:2.25rem;text-align:right">${counts[g] || 0}</b></div>`)
           .join('')}</div>`
       : ''
   }
-  <div class="actions" style="margin-top:14px">
+  <div class="actions" style="margin-top:0.875rem">
     <a class="action" href="#/lab"><span class="ic">🎯</span><b>적중률 보기</b><small>내 추천가가 맞았는지</small></a>
     <a class="action" href="#/jobs"><span class="ic">🤖</span><b>AI 작업</b><small>${S.claude ? '진행 상황·기록' : 'Claude Code 연결 필요'}</small></a>
   </div>
@@ -329,9 +356,9 @@ function viewList() {
   <div class="row between"><h1>물건</h1><div class="row"><button class="btn sm" data-act="add">➕ 추가</button><button class="btn sm primary" data-act="search">🔎 AI로 찾기</button></div></div>
   <input class="search" id="q" placeholder="사건번호·주소·태그 검색 (예: 대항력)" value="${esc(listState.q)}">
   <div class="chips">${F.map((x) => `<button class="chip ${x === f ? 'on' : ''}" data-f="${x}">${x === '전체' || x === '관심' ? x : x + ' ' + GRADE_TEXT[x]}</button>`).join('')}</div>
-  <div class="row between" style="margin-bottom:8px"><span class="sub" style="margin:0">${xs.length}건</span>
+  <div class="row between" style="margin-bottom:0.5rem"><span class="sub" style="margin:0">${xs.length}건</span>
     <select id="sort" class="btn sm">${[['grade', '등급순'], ['date', '입찰일순'], ['price', '최저가 낮은순'], ['profit', '예상 이익순']].map(([k, l]) => `<option value="${k}" ${listState.sort === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-  ${xs.length ? `<div class="grid g2">${xs.map(caseCard).join('')}</div>` : `<div class="card empty"><div class="big">📭</div>${S.cases.length ? '조건에 맞는 물건이 없어요' : '아직 물건이 없어요. AI로 찾거나 샘플로 체험해 보세요.'}<div class="row" style="justify-content:center;margin-top:10px"><button class="btn primary" data-act="search">AI로 물건 찾기</button>${S.cases.length ? '' : '<button class="btn" data-act="samples">샘플 불러오기</button>'}</div></div>`}`;
+  ${xs.length ? `<div class="grid g2">${xs.map(caseCard).join('')}</div>` : `<div class="card empty"><div class="big">📭</div>${S.cases.length ? '조건에 맞는 물건이 없어요' : '아직 물건이 없어요. AI로 찾거나 샘플로 체험해 보세요.'}<div class="row" style="justify-content:center;margin-top:0.625rem"><button class="btn primary" data-act="search">AI로 물건 찾기</button>${S.cases.length ? '' : '<button class="btn" data-act="samples">샘플 불러오기</button>'}</div></div>`}`;
 }
 function bindList(root) {
   $('#q', root).oninput = (e) => {
@@ -350,6 +377,7 @@ function bindList(root) {
 const TAB_DEFS = [
   ['요약', null],
   ['권리관계', '⚖️'],
+  ['위치', 'map'],
   ['입찰가·돈', '💰'],
   ['경쟁', '🏁'],
   ['명도', '🚪'],
@@ -368,11 +396,12 @@ async function viewCase(id) {
   detail = await api(`/api/case/${encodeURIComponent(id)}`);
   const { case: c, summary: s, sections } = detail;
   const secByIcon = (icon) => Object.entries(sections).find(([k]) => k.startsWith(icon));
-  const tabs = TAB_DEFS.filter(([, icon]) => !icon || icon === 'form' || icon === 'raw' || secByIcon(icon));
+  const tabs = TAB_DEFS.filter(([, icon]) => !icon || ['form', 'raw', 'map'].includes(icon) || secByIcon(icon));
   if (!tabs.find(([n]) => n === detailTab)) detailTab = '요약';
   const pane = (() => {
     const def = tabs.find(([n]) => n === detailTab);
     if (def[1] === 'form') return formPane(c);
+    if (def[1] === 'map') return locationPane(c, s);
     if (def[1] === 'raw') return rawPane(c);
     if (!def[1]) return summaryPane(c, s, sections);
     const [title, html] = secByIcon(def[1]);
@@ -380,15 +409,15 @@ async function viewCase(id) {
   })();
   return `
   <a href="#/list" class="sub" style="text-decoration:none">← 물건 목록</a>
-  <div class="card" style="margin-top:6px">
+  <div class="card" style="margin-top:0.375rem">
     <div class="row between" style="align-items:flex-start">
       <div class="row" style="align-items:flex-start;flex-wrap:nowrap">${gradeBadge(s.grade)}<div><h1 style="margin:0">${esc(c.caseNo)}${s.sample ? '<span class="sample">샘플</span>' : ''}</h1><div class="sub" style="margin:0">${esc(c.court || '')} · ${esc(c.usage || '')} ${c.areaM2 ? esc(c.areaM2) + '㎡' : ''}</div></div></div>
       <button class="star ${s.watch ? 'on' : ''}" data-watch="${esc(s.id)}">${s.watch ? '★' : '☆'}</button>
     </div>
-    <div class="addr" style="margin:6px 0">${esc(c.address || '주소 미확인')}</div>
+    <div class="addr" style="margin:0.375rem 0">${esc(c.address || '주소 미확인')}</div>
     <div>${s.rightsLabel ? `<span class="tag">${esc(s.rightsLabel)}</span>` : ''}${tagChips(s.tags, 12)}</div>
-    <p style="margin:8px 0 0"><b>${esc(GRADE_TEXT[s.grade] || '')}</b> — ${esc(s.reasons.join(' · '))}</p>
-    <div class="row" style="margin-top:10px">
+    <p style="margin:0.5rem 0 0"><b>${esc(GRADE_TEXT[s.grade] || '')}</b> — ${esc(s.reasons.join(' · '))}</p>
+    <div class="row" style="margin-top:0.625rem">
       <button class="btn sm" data-job="analyze">🤖 AI 재분석</button>
       <button class="btn sm" data-job="verify">🔍 교차검증</button>
       <a class="btn sm" href="#/content/${encodeURIComponent(s.id)}">✍️ 콘텐츠</a>
@@ -411,9 +440,9 @@ function summaryPane(c, s, sections) {
     <div class="card kpi"><div class="l">${s.grade === 'X' ? '판정' : '추천 입찰가 / 상한'}</div><div class="v">${s.grade === 'X' ? '입찰 비추천' : eok(s.recommended)}</div><div class="l">${s.grade === 'X' ? esc(s.reasons[0] || '') : `상한 ${eok(s.ceiling)} 넘으면 포기`}</div></div>
     <div class="card kpi"><div class="l">잔금일 필요 현금</div><div class="v">${eok(s.cashNeeded)}</div><div class="l">입찰 당일 보증금 ${eok(k.deposit)}</div></div>
   </div>
-  <div class="grid g2" style="margin-top:12px">
-    <div class="card kpi"><div class="l">낙찰 가능성</div><div class="v">${comp && comp.chance ? `<span class="pill ${esc(comp.chance)}" style="font-size:18px">${esc(comp.chance)}</span>` : '-'}</div><div class="l">${esc(comp ? comp.advice || comp.note || '' : '')}</div></div>
-    <div class="card kpi"><div class="l">추천 활용법</div><div class="v" style="font-size:19px">${esc(best ? best.name : '-')}</div><div class="l">${best ? (best.key === 'live' ? `급매보다 ${eok(best.profit)} 절약` : `예상 이익 ${eok(best.profit)}`) : '시세 확인 후 계산'}</div></div>
+  <div class="grid g2" style="margin-top:0.75rem">
+    <div class="card kpi"><div class="l">낙찰 가능성</div><div class="v">${comp && comp.chance ? `<span class="pill ${esc(comp.chance)}" style="font-size:1.125rem">${esc(comp.chance)}</span>` : '-'}</div><div class="l">${esc(comp ? comp.advice || comp.note || '' : '')}</div></div>
+    <div class="card kpi"><div class="l">추천 활용법</div><div class="v" style="font-size:1.1875rem">${esc(best ? best.name : '-')}</div><div class="l">${best ? (best.key === 'live' ? `급매보다 ${eok(best.profit)} 절약` : `예상 이익 ${eok(best.profit)}`) : '시세 확인 후 계산'}</div></div>
   </div>
   <h3>권리관계 요약</h3>
   <div class="card">${rightsSummary || '<span class="sub">서류 정리 전이에요 — AI 재분석을 눌러 주세요</span>'}<a href="#" data-tab="권리관계">타임라인·체크리스트 자세히 →</a></div>
@@ -437,28 +466,28 @@ function formPane(c) {
     <div class="grid g3">${mInput('low', '보수 (급매·하위 실거래)', mp.low)}${mInput('mid', '기준 (실거래 중간)', mp.mid)}${mInput('high', '낙관 (최고 실거래)', mp.high)}</div>
     ${tInput('source', '출처 (필수)', mp.source, '예: 국토부 실거래 최근 6개월 3건, 11/2 조회')}
     <button class="btn primary">시세 저장</button></form>
-  <form class="card" data-form="rent" style="margin-top:12px"><h3 style="margin-top:0">🏘 전월세 시세</h3>
+  <form class="card" data-form="rent" style="margin-top:0.75rem"><h3 style="margin-top:0">🏘 전월세 시세</h3>
     <div class="grid g3">${mInput('jeonse', '전세', rm.jeonse)}${mInput('monthlyDeposit', '월세 보증금', rm.monthlyDeposit, '예: 3000만')}${mInput('monthlyRent', '월세', rm.monthlyRent, '예: 120만')}</div>
     ${tInput('source', '출처', rm.source, '예: 단지 앞 중개사 2곳')}
     <button class="btn primary">전월세 저장</button></form>
-  <form class="card" data-form="costs" style="margin-top:12px"><h3 style="margin-top:0">🧾 비용</h3>
+  <form class="card" data-form="costs" style="margin-top:0.75rem"><h3 style="margin-top:0">🧾 비용</h3>
     <div class="grid g2">${mInput('unpaidMgmtFee', '체납관리비 (공용부분)', k.unpaidMgmtFee, '예: 120만')}${mInput('repairCost', '수리비', k.repairCost, '예: 1000만')}${mInput('evictionCost', '명도비 (비우면 자동 추정)', k.evictionCost, '예: 300만')}${mInput('monthlyHoldingCost', '월 보유비 (관리비·보유세)', k.monthlyHoldingCost, '예: 30만')}</div>
     <button class="btn primary">비용 저장</button></form>
-  <form class="card" data-form="home" style="margin-top:12px"><h3 style="margin-top:0">🏠 내 집으로서 (실거주)</h3>
+  <form class="card" data-form="home" style="margin-top:0.75rem"><h3 style="margin-top:0">🏠 내 집으로서 (실거주)</h3>
     ${tInput('commute', '출퇴근', h.commute, '예: 동탄역까지 버스 15분')}${tInput('school', '학교', h.school, '예: 초등학교 도보 7분')}${tInput('living', '생활', h.living, '예: 마트·병원 도보권')}
     <div class="field"><label>적합도</label><select name="score">${['', 1, 2, 3, 4, 5].map((n) => `<option value="${n}" ${String(h.score ?? '') === String(n) ? 'selected' : ''}>${n ? '★'.repeat(n) : '선택'}</option>`).join('')}</select></div>
     <button class="btn primary">저장</button></form>
-  <form class="card" data-form="comp" style="margin-top:12px"><h3 style="margin-top:0">🏁 비슷한 물건 낙찰 사례 (${comps.length}건)</h3>
+  <form class="card" data-form="comp" style="margin-top:0.75rem"><h3 style="margin-top:0">🏁 비슷한 물건 낙찰 사례 (${comps.length}건)</h3>
     ${comps.length ? `<div class="tw"><table><tr><th>사례</th><th>날짜</th><th>낙찰가율</th><th>입찰자</th><th></th></tr>${comps.map((x, i) => `<tr><td>${esc(x.caseNo || '-')}</td><td>${esc(x.date || '-')}</td><td>${x.appraisal ? pct(x.winningBid / x.appraisal) : '-'}</td><td>${esc(x.bidders ?? '-')}</td><td><button type="button" class="btn sm danger" data-delcomp="${i}">삭제</button></td></tr>`).join('')}</table></div>` : '<p class="sub">같은 단지·인근의 최근 낙찰 사례를 넣으면 "낙찰 가능성"이 계산돼요.</p>'}
     <div class="grid g3">${tInput('caseNo', '사건번호', '', '예: 2025타경1234')}${tInput('date', '낙찰일', '', '예: 2026-09-15')}${tInput('bidders', '입찰자 수', '', '예: 7')}${mInput('appraisal', '감정가', null)}${mInput('winningBid', '낙찰가', null)}${tInput('source', '출처', '', '예: 법원경매정보 매각결과')}</div>
     <button class="btn primary">사례 추가</button></form>
-  <form class="card" data-form="outcome" style="margin-top:12px"><h3 style="margin-top:0">🔨 입찰 결과 기록</h3>
+  <form class="card" data-form="outcome" style="margin-top:0.75rem"><h3 style="margin-top:0">🔨 입찰 결과 기록</h3>
     <p class="sub">입찰일이 지나면 결과를 적어 두세요. 내 추천가 적중률(🎯)이 쌓여요.</p>
     <div class="grid g3"><div class="field"><label>결과</label><select name="result">${['', '낙찰', '유찰', '변경', '취하'].map((x) => `<option ${o.result === x ? 'selected' : ''} value="${x}">${x || '선택'}</option>`).join('')}</select></div>
     ${mInput('winningBid', '낙찰가', o.winningBid)}${tInput('bidders', '입찰자 수', o.bidders)}${tInput('date', '날짜', o.date || c.saleDate)}${mInput('myBid', '내가 쓴 금액 (입찰했다면)', o.myBid)}</div>
     <label class="check"><input type="checkbox" name="won" ${o.won ? 'checked' : ''}> 내가 낙찰받았어요 (낙찰 후 일정이 캘린더에 추가돼요)</label>
     <button class="btn primary">결과 저장</button></form>
-  <form class="card" data-form="memo" style="margin-top:12px"><h3 style="margin-top:0">📝 임장 메모</h3>
+  <form class="card" data-form="memo" style="margin-top:0.75rem"><h3 style="margin-top:0">📝 임장 메모</h3>
     <div class="field"><textarea name="memo" placeholder="본 것·들은 것을 자유롭게 (예: 1층 누수 흔적, 관리실 말로는 체납 120만, 중개사 급매 4.6억)" style="font-family:inherit">${esc(c.memo || '')}</textarea></div>
     <div class="row"><button class="btn primary">메모 저장</button><button type="button" class="btn" data-memojob>🤖 메모를 AI가 읽고 반영</button></div></form>`;
 }
@@ -466,7 +495,7 @@ function formPane(c) {
 function rawPane(c) {
   const { result, _id, ...data } = c;
   return `<p class="warnbox">AI가 서류에서 옮긴 원본 데이터예요. 틀린 사실을 직접 고칠 때만 쓰세요. (저장하면 바로 다시 계산돼요)</p>
-  <form data-form="raw"><div class="field"><textarea name="json" style="min-height:420px">${esc(JSON.stringify(data, null, 2))}</textarea></div>
+  <form data-form="raw"><div class="field"><textarea name="json" style="min-height:26.25rem">${esc(JSON.stringify(data, null, 2))}</textarea></div>
   <div class="row"><button class="btn primary">저장</button><button type="button" class="btn danger" data-delcase>이 물건 삭제</button></div></form>`;
 }
 
@@ -589,15 +618,15 @@ function viewCalendar() {
   <h1>일정</h1>
   <p class="sub">물건마다 임장 → 전날 확인 → 입찰 일정이 자동으로 잡혀요. 낙찰받으면 허가·확정·잔금 일정이 추가돼요.</p>
   <div class="row between">
-    <div class="row"><button class="btn sm" data-mon="-1">‹</button><b style="font-size:17px">${cal.y}년 ${cal.m + 1}월</b><button class="btn sm" data-mon="1">›</button></div>
+    <div class="row"><button class="btn sm" data-mon="-1">‹</button><b style="font-size:1.0625rem">${cal.y}년 ${cal.m + 1}월</b><button class="btn sm" data-mon="1">›</button></div>
     <div class="chips" style="margin:0"><button class="chip ${!cal.only ? 'on' : ''}" data-only="0">전체</button><button class="chip ${cal.only ? 'on' : ''}" data-only="1">⭐ 관심만</button></div>
   </div>
-  <div class="month" style="margin-top:8px">${['일', '월', '화', '수', '목', '금', '토'].map((x) => `<div class="h">${x}</div>`).join('')}${cells.join('')}</div>
-  <div class="card evlist" style="margin-top:12px">${monthEvents.length ? monthEvents.map((e) => `<a class="e" href="#/case/${encodeURIComponent(e.id || e.caseNo.replace(/[^\w가-힣-]/g, '_'))}" style="text-decoration:none;color:inherit"><div class="d">${e.date.slice(5)}</div><div><b>${esc(e.kind)}</b> ${esc(e.caseNo)} ${e.watch ? '⭐' : ''}<small>${esc(e.detail)}</small></div></a>`).join('') : '<div class="empty">이 달에는 일정이 없어요</div>'}</div>
+  <div class="month" style="margin-top:0.5rem">${['일', '월', '화', '수', '목', '금', '토'].map((x) => `<div class="h">${x}</div>`).join('')}${cells.join('')}</div>
+  <div class="card evlist" style="margin-top:0.75rem">${monthEvents.length ? monthEvents.map((e) => `<a class="e" href="#/case/${encodeURIComponent(e.id || e.caseNo.replace(/[^\w가-힣-]/g, '_'))}" style="text-decoration:none;color:inherit"><div class="d">${e.date.slice(5)}</div><div><b>${esc(e.kind)}</b> ${esc(e.caseNo)} ${e.watch ? '⭐' : ''}<small>${esc(e.detail)}</small></div></a>`).join('') : '<div class="empty">이 달에는 일정이 없어요</div>'}</div>
   <h2>📲 내 캘린더에 넣기</h2>
   <div class="card">
     <div class="row"><a class="btn primary" href="/api/calendar.ics">⭐ 관심물건 일정 받기 (.ics)</a><a class="btn" href="/api/calendar.ics?all=1">전체 일정 받기</a></div>
-    <ol class="steps" style="margin-top:12px">
+    <ol class="steps" style="margin-top:0.75rem">
       <li><div><b>구글 캘린더</b>: 컴퓨터에서 calendar.google.com → 톱니바퀴(설정) → 가져오기/내보내기 → 받은 파일 선택</div></li>
       <li><div><b>아이폰</b>: 받은 파일을 열면 "모두 추가"</div></li>
       <li><div>일정이 바뀌면 파일을 다시 받아 가져오세요 (같은 일정은 덮어써져요)</div></li>
@@ -620,7 +649,7 @@ function bindCalendar(root) {
 // ---------- 적중률 ----------
 function viewLab() {
   const s = S.stats;
-  const bar = (label, n) => `<div style="margin:10px 0"><div class="row between"><span>${label}</span><b>${s.n ? pct(n / s.n, 0) : '-'} <small class="sub">(${n}건)</small></b></div><div class="bar"><i style="width:${s.n ? (n / s.n) * 100 : 0}%"></i></div></div>`;
+  const bar = (label, n) => `<div style="margin:0.625rem 0"><div class="row between"><span>${label}</span><b>${s.n ? pct(n / s.n, 0) : '-'} <small class="sub">(${n}건)</small></b></div><div class="bar"><i style="width:${s.n ? (n / s.n) * 100 : 0}%"></i></div></div>`;
   return `
   <h1>🎯 내 추천가 적중률</h1>
   <p class="sub">입찰일이 지난 물건에 실제 낙찰가를 기록하면, 내 추천 입찰가가 얼마나 맞았는지 쌓여요. (물건 → 기록하기 → 입찰 결과)</p>
@@ -631,7 +660,7 @@ function viewLab() {
     <div class="card kpi"><div class="l">치우침</div><div class="v">${s.bias != null ? (s.bias < 0 ? '낮게 ' : '높게 ') + pct(Math.abs(s.bias)) : '-'}</div><div class="l">낮게 ${s.low} · 높게 ${s.high}</div></div>
     <div class="card kpi"><div class="l">내 입찰</div><div class="v">${s.myWins}/${s.myBids}</div><div class="l">낙찰 / 입찰</div></div>
   </div>
-  <div class="card" style="margin-top:12px">${bar('오차 ±5% 이내', s.within5)}${bar('오차 ±10% 이내', s.within10)}${bar('오차 ±15% 이내', s.within15)}${bar('오차 ±20% 이내', s.within20)}<p class="note" style="margin-bottom:0">💡 ${esc(s.hint)}</p></div>
+  <div class="card" style="margin-top:0.75rem">${bar('오차 ±5% 이내', s.within5)}${bar('오차 ±10% 이내', s.within10)}${bar('오차 ±15% 이내', s.within15)}${bar('오차 ±20% 이내', s.within20)}<p class="note" style="margin-bottom:0">💡 ${esc(s.hint)}</p></div>
   <h2>왜 평균만 보면 안 될까</h2>
   <div class="card"><p style="margin-top:0">추천가가 한 번은 10% 낮고 한 번은 20% 높으면 평균은 +5%로 그럴듯해 보여요. 하지만 실제로는 매번 크게 빗나간 거예요. 그래서 위처럼 <b>오차 구간별 비율</b>과 <b>치우침(낮게/높게)</b>을 같이 봐요.</p></div>
   <h2>기록</h2>
@@ -642,7 +671,7 @@ function viewLab() {
 const contentState = { type: 'blog' };
 async function viewContent(id) {
   const analyzed = S.cases.filter((c) => c.grade !== '보류');
-  if (!analyzed.length) return `<h1>✍️ 콘텐츠</h1><div class="card empty"><div class="big">✍️</div>분석된 물건이 있어야 블로그·유튜브 원고를 만들 수 있어요.<div style="margin-top:10px"><button class="btn primary" data-act="samples">샘플로 체험</button></div></div>`;
+  if (!analyzed.length) return `<h1>✍️ 콘텐츠</h1><div class="card empty"><div class="big">✍️</div>분석된 물건이 있어야 블로그·유튜브 원고를 만들 수 있어요.<div style="margin-top:0.625rem"><button class="btn primary" data-act="samples">샘플로 체험</button></div></div>`;
   const cur = id || analyzed[0].id;
   const d = await api(`/api/content/${encodeURIComponent(cur)}?type=${contentState.type}`).catch((e) => ({ error: e.message }));
   const T = [['blog', '📝 블로그 글'], ['shorts', '📱 유튜브 쇼츠'], ['longform', '🎬 유튜브 롱폼']];
@@ -655,7 +684,7 @@ async function viewContent(id) {
   <div class="row between"><h3>사실 뼈대 초안</h3><div class="row"><button class="btn sm" data-copy="draft">복사</button><button class="btn sm primary" data-polish>🤖 AI로 자연스럽게 다듬기</button></div></div>
   <div class="copybox" id="draft">${esc(d.text)}</div>
   ${d.polished ? `<div class="row between"><h3>AI가 다듬은 원고</h3><button class="btn sm" data-copy="pol">복사</button></div><div class="copybox" id="pol">${esc(d.polished)}</div>` : ''}
-  <p class="note" style="margin-top:12px">발행은 직접 해주세요. 경매 콘텐츠에는 "투자 권유·법률 자문 아님" 문구를 꼭 남겨 두세요.</p>`}`;
+  <p class="note" style="margin-top:0.75rem">발행은 직접 해주세요. 경매 콘텐츠에는 "투자 권유·법률 자문 아님" 문구를 꼭 남겨 두세요.</p>`}`;
 }
 function bindContent(root) {
   const pick = $('#pick', root);
@@ -689,6 +718,138 @@ async function viewJobs(id) {
   ${S.jobs.length ? `<div class="card evlist">${S.jobs.map((x) => `<a class="e" href="#/jobs/${esc(x.id)}" style="text-decoration:none;color:inherit"><div class="d">${{ running: '⏳', done: '✅', failed: '❌', manual: '📋' }[x.status] || ''}</div><div><b>${esc({ search: '물건 찾기', analyze: '분석', update: '임장 반영', verify: '교차검증', content: '콘텐츠' }[x.kind] || x.kind)}</b> ${esc(x.params.caseNo || x.params.text || '')}<small>${esc(x.startedAt.replace('T', ' ').slice(0, 16))}</small></div></a>`).join('')}</div>` : '<div class="card empty">아직 실행한 작업이 없어요</div>'}`;
 }
 
+// ---------- 지도 ----------
+let mapInst = null;
+const dropMap = () => {
+  if (mapInst) {
+    mapInst.remove();
+    mapInst = null;
+  }
+};
+const mapReady = () => typeof window.L !== 'undefined';
+function baseMap(el, center = [36.5, 127.8], zoom = 7) {
+  dropMap();
+  mapInst = L.map(el, { scrollWheelZoom: true }).setView(center, zoom);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(mapInst);
+  return mapInst;
+}
+const pinIcon = (c) => L.divIcon({ className: `pin ${c.watch ? 'watch' : ''}`, html: `<span class="grade ${esc(c.grade)}">${esc(c.grade === '보류' ? '?' : c.grade)}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+const extLinks = (c) => {
+  const q = encodeURIComponent(c.searchAddress || c.address || '');
+  const g = c.geo;
+  return `<div class="maplinks">
+    <a class="btn sm" target="_blank" rel="noopener" href="https://map.kakao.com/?q=${q}">카카오맵</a>
+    <a class="btn sm" target="_blank" rel="noopener" href="https://map.naver.com/p/search/${q}">네이버지도</a>
+    ${g ? `<a class="btn sm" target="_blank" rel="noopener" href="https://map.kakao.com/link/roadview/${g.lat},${g.lng}">🚶 로드뷰</a>` : ''}
+  </div>`;
+};
+
+const mapState = { filter: '전체' };
+function viewMap() {
+  const F = ['전체', '관심', 'A', 'B', 'C', 'X'];
+  const xs = S.cases.filter((c) => (mapState.filter === '전체' ? true : mapState.filter === '관심' ? c.watch : c.grade === mapState.filter));
+  const located = xs.filter((c) => c.geo);
+  const missing = xs.filter((c) => !c.geo);
+  return `
+  <div class="row between"><h1>🗺 지도</h1>${missing.length ? `<button class="btn sm primary" id="geoAll">📍 위치 찾기 (${missing.length}건)</button>` : ''}</div>
+  <p class="sub">핀을 누르면 물건 요약이 보여요. 색은 등급, 노란 테두리는 관심물건이에요.</p>
+  <div class="chips">${F.map((x) => `<button class="chip ${x === mapState.filter ? 'on' : ''}" data-mf="${x}">${x === '전체' || x === '관심' ? x : x + ' ' + GRADE_TEXT[x]}</button>`).join('')}</div>
+  <div class="legend">${['A', 'B', 'C', 'X'].map((g) => `${gradeBadge(g)} ${GRADE_TEXT[g]}`).join(' ')}</div>
+  ${mapReady() ? '<div id="map" class="map"></div>' : '<div class="warnbox">지도 파일을 불러오지 못했어요. 화면을 새로고침해 주세요.</div>'}
+  ${located.some((c) => c.geo.approx) ? '<p class="note" style="margin-top:0.5rem">일부 핀은 정확한 번지를 못 찾아 동네 위치로 찍혔어요(대략). 물건 → 위치 탭에서 직접 옮길 수 있어요.</p>' : ''}
+  ${
+    missing.length
+      ? `<h2>위치 없는 물건 ${missing.length}건</h2><div class="card evlist">${missing.map((c) => `<a class="e" href="#/case/${encodeURIComponent(c.id)}/위치" style="text-decoration:none;color:inherit"><div class="d">${gradeBadge(c.grade)}</div><div><b>${esc(c.caseNo)}</b><small>${esc(c.address || '주소 미확인')}</small></div></a>`).join('')}</div>
+         <p class="sub">${S.hasKakaoKey ? '카카오 주소 검색으로 찾아요.' : '무료 OpenStreetMap으로 찾아요(한국 주소는 덜 정확). 설정에서 카카오 키를 넣으면 정확해져요.'}</p>`
+      : ''
+  }`;
+}
+function bindMap(root) {
+  $$('[data-mf]', root).forEach((b) => (b.onclick = () => ((mapState.filter = b.dataset.mf), render())));
+  const all = $('#geoAll', root);
+  if (all)
+    all.onclick = async () => {
+      all.disabled = true;
+      all.textContent = '찾는 중… (1건에 1~2초)';
+      try {
+        const r = await api('/api/geocode', { method: 'POST', body: {} });
+        S = r.state;
+        toast(`${r.found}건 위치를 찾았어요${r.failed.length ? ` · ${r.failed.length}건 실패 — 직접 찍어 주세요` : ''}`, 4000);
+      } catch (e) {
+        toast(e.message, 4000);
+      }
+      render();
+    };
+  const el = $('#map', root);
+  if (!el || !mapReady()) return;
+  const m = baseMap(el);
+  const xs = S.cases.filter((c) => c.geo && (mapState.filter === '전체' ? true : mapState.filter === '관심' ? c.watch : c.grade === mapState.filter));
+  const pts = [];
+  for (const c of xs) {
+    pts.push([c.geo.lat, c.geo.lng]);
+    L.marker([c.geo.lat, c.geo.lng], { icon: pinIcon(c), title: c.caseNo })
+      .addTo(m)
+      .bindPopup(
+        `<b>${esc(c.caseNo)}</b>${c.sample ? ' <span class="sample">샘플</span>' : ''}<br>${esc(c.usage || '')} ${c.areaM2 ? esc(c.areaM2) + '㎡' : ''} · ${esc(GRADE_TEXT[c.grade])}<br>최저가 <b>${eok(c.minPrice)}</b> (${pct(c.minPriceRatio, 0)})<br>${c.grade === 'X' ? '입찰 비추천' : `추천가 ${eok(c.recommended)}`} · ${esc(ddayText(c.dday))}<br>${tagChips(c.tags, 3)}<br><a href="#/case/${encodeURIComponent(c.id)}">자세히 보기 →</a>`,
+      );
+  }
+  if (pts.length === 1) m.setView(pts[0], 15);
+  else if (pts.length) m.fitBounds(pts, { padding: [30, 30], maxZoom: 15 });
+}
+
+function locationPane(c, s) {
+  const g = c.geo;
+  return `
+  <div class="card">
+    <div class="row between"><div><b>📍 ${esc(c.address || '주소 미확인')}</b><div class="sub" style="margin:0">${g ? `${esc(g.source)}${g.approx ? ' · 동네 단위(대략)' : ''}${g.query ? ` · "${esc(g.query)}"` : ''}` : '아직 위치가 없어요'}</div></div></div>
+    ${extLinks(s)}
+  </div>
+  ${mapReady() ? '<div id="cmap" class="map small" style="margin-top:0.75rem"></div>' : ''}
+  <div class="row" style="margin-top:0.75rem">
+    <button class="btn" id="geoOne">📍 주소로 위치 찾기</button>
+    <button class="btn" id="pinMode">👆 지도에서 직접 찍기</button>
+  </div>
+  <p class="sub" style="margin-top:0.5rem">핀이 틀리면 "지도에서 직접 찍기"를 누른 뒤 정확한 건물을 눌러 주세요. 주변 학교·역·마트는 지도를 확대해 보거나 로드뷰로 확인하세요.</p>`;
+}
+function bindLocation(root) {
+  const id = detail.summary.id;
+  const c = detail.case;
+  const saveGeo = async (geo, msg) => {
+    try {
+      detail = await api(`/api/case/${encodeURIComponent(id)}/update`, { method: 'POST', body: { geo } });
+      await load();
+      toast(msg);
+      render();
+    } catch (e) {
+      toast(e.message);
+    }
+  };
+  const one = $('#geoOne', root);
+  if (one)
+    one.onclick = async () => {
+      one.disabled = true;
+      try {
+        await api(`/api/case/${encodeURIComponent(id)}/geocode`, { method: 'POST', body: {} });
+        await load();
+        toast('위치를 찾았어요');
+      } catch (e) {
+        toast(e.message, 4000);
+      }
+      render();
+    };
+  const el = $('#cmap', root);
+  if (!el || !mapReady()) return;
+  const m = c.geo ? baseMap(el, [c.geo.lat, c.geo.lng], 16) : baseMap(el);
+  if (c.geo) L.marker([c.geo.lat, c.geo.lng], { icon: pinIcon(detail.summary) }).addTo(m);
+  const pm = $('#pinMode', root);
+  pm.onclick = () => {
+    pm.classList.add('primary');
+    pm.textContent = '지도에서 건물 위치를 눌러 주세요';
+    el.style.cursor = 'crosshair';
+    m.once('click', (e) => saveGeo({ lat: +e.latlng.lat.toFixed(6), lng: +e.latlng.lng.toFixed(6), source: '직접 지정', approx: false, query: null }, '위치를 저장했어요'));
+  };
+}
+
 // ---------- 설정 ----------
 function viewSettings() {
   const c = S.criteria;
@@ -701,12 +862,25 @@ function viewSettings() {
   const num = (name, label, v, hint, step = 'any') => `<div class="field"><label>${label}</label><input name="${name}" type="number" step="${step}" value="${esc(v ?? '')}">${hint ? `<small>${hint}</small>` : ''}</div>`;
   return `
   <h1>⚙️ 설정</h1>
+  <div class="card"><h3 style="margin-top:0">🖥 화면</h3>
+    <div class="field"><label>글자 크기 — <span id="fsName">${FONT_NAMES[getPrefs().fontScale] || Math.round(getPrefs().fontScale * 100) + '%'}</span></label>
+      <input class="range" type="range" id="fs" min="0" max="${FONT_STEPS.length - 1}" step="1" value="${Math.max(0, FONT_STEPS.indexOf(getPrefs().fontScale))}">
+      <small>위쪽 <b>가가</b> 버튼으로도 바꿀 수 있어요. 버튼·간격도 같이 커져요.</small></div>
+    <div class="field"><label>화면 색</label><select id="theme">${[['auto', '자동 (기기 설정 따라)'], ['light', '밝게'], ['dark', '어둡게']].map(([v, l]) => `<option value="${v}" ${getPrefs().theme === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="preview">미리보기: 최저가 <b>3억 6,400만</b> · 추천 입찰가 <b>3억 8,530만</b></div>
+  </div>
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">🗺 지도 위치 찾기</h3>
+    <p class="sub">기본은 무료 OpenStreetMap이에요(한국 주소는 동네 단위로만 찾는 경우가 많아요). 카카오 REST API 키를 넣으면 번지까지 정확하게 찾아요.</p>
+    <div class="field"><label>카카오 REST API 키 (선택)</label><input id="kakaoKey" placeholder="${S.hasKakaoKey ? '저장됨 — 바꾸려면 새 키 입력' : '예: 1a2b3c…'}" autocomplete="off"><small>developers.kakao.com → 내 애플리케이션 → 앱 키 → REST API 키 (무료). 이 컴퓨터에만 저장돼요.</small></div>
+    <div class="row"><button class="btn" id="saveKey">키 저장</button>${S.hasKakaoKey ? '<button class="btn danger" id="delKey">키 지우기</button>' : ''}</div>
+  </div>
+  <h2>🎯 내 조건</h2>
   <p class="sub">여기 값이 모든 물건의 입찰가·세금·추천에 쓰여요. 저장하면 전체가 다시 계산돼요.</p>
   <form id="settings">
   <div class="card"><h3 style="margin-top:0">🎯 목적</h3>
     <div class="field"><label>무엇을 위해 경매를 하나요?</label>${sel('goal', [['투자(단기매도)', '투자 — 팔아서 수익'], ['임대(전세·월세)', '임대 — 세 놓기'], ['실거주', '실거주 — 내 집 마련'], ['상관없음', '상관없음 — 가장 유리한 방법 추천']], c.goal)}</div>
   </div>
-  <div class="card" style="margin-top:12px"><h3 style="margin-top:0">💰 내 돈</h3>
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">💰 내 돈</h3>
     <div class="grid g2">
       ${mInput('cashAvailable', '쓸 수 있는 현금', c.cashAvailable, '예: 2억')}
       ${num('loanRatio', '대출 비율 (%)', b.loanRatio != null ? Math.round(b.loanRatio * 100) : '', '경락잔금대출 — 은행 상담값 (모르면 60)')}
@@ -718,7 +892,7 @@ function viewSettings() {
     <label class="check"><input type="checkbox" name="firstHome" ${b.firstHome ? 'checked' : ''}> 생애최초 주택 구입 (취득세 감면)</label>
     <label class="check"><input type="checkbox" name="regulatedArea" ${b.regulatedArea ? 'checked' : ''}> 조정대상지역 물건</label>
   </div>
-  <div class="card" style="margin-top:12px"><h3 style="margin-top:0">🔎 찾는 물건</h3>
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">🔎 찾는 물건</h3>
     <div class="grid g2">
       ${tInput('court', '법원', c.court, '예: 수원지방법원')}
       ${tInput('sido', '시·도', c.sido, '예: 경기도')}
@@ -732,7 +906,7 @@ function viewSettings() {
     </div>
     <div class="field"><label>무조건 제외할 위험</label>${RISKS.map((r) => `<label class="check"><input type="checkbox" name="risk" value="${r}" ${(c.excludeRisks || []).includes(r) ? 'checked' : ''}> ${r}</label>`).join('')}</div>
   </div>
-  <div class="card" style="margin-top:12px"><h3 style="margin-top:0">🏠 실거주 기준 (목적이 실거주일 때)</h3>
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">🏠 실거주 기준 (목적이 실거주일 때)</h3>
     <div class="grid g2">
       ${tInput('workplace', '직장 위치', h.workplace, '예: 판교역')}
       ${num('commuteMaxMin', '출퇴근 최대 (분)', h.commuteMaxMin, '', '1')}
@@ -741,7 +915,7 @@ function viewSettings() {
     </div>
     <label class="check"><input type="checkbox" name="needSchool" ${h.needSchool ? 'checked' : ''}> 초등학교 도보 거리 필요</label>
   </div>
-  <div class="card" style="margin-top:12px"><h3 style="margin-top:0">🧾 비용 추정치 (고급)</h3>
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">🧾 비용 추정치 (고급)</h3>
     <p class="sub">임장 전 기본값이에요. 물건별로 실제 값을 기록하면 그게 우선이에요.</p>
     <div class="grid g3">
       ${mInput('mvLow', '이사비 협의 (적게)', E.moveOutPayment.low, '예: 200만')}
@@ -754,12 +928,30 @@ function viewSettings() {
     </div>
     <p class="note">세율은 auction/config/tax-rates.json 에 있어요. 법이 바뀌면 Claude에게 "세율 최신으로 확인해줘"라고 말해 주세요.</p>
   </div>
-  <div class="row" style="margin:16px 0"><button class="btn primary" style="flex:1">저장하고 다시 계산</button></div>
+  <div class="row" style="margin:1rem 0"><button class="btn primary" style="flex:1">저장하고 다시 계산</button></div>
   </form>
   <div class="card"><h3 style="margin-top:0">🧪 샘플 데이터</h3><div class="row"><button class="btn" data-act="samples">샘플 불러오기</button><button class="btn danger" data-act="clear">샘플 지우기</button></div></div>
-  <div class="card" style="margin-top:12px"><h3 style="margin-top:0">📄 리포트</h3><div class="row"><button class="btn" data-act="report">새 리포트 만들기</button>${S.reports.map((r) => `<a class="btn sm" href="/reports/${encodeURIComponent(r)}" target="_blank">${esc(r.slice(0, 8))}</a>`).join('')}</div></div>`;
+  <div class="card" style="margin-top:0.75rem"><h3 style="margin-top:0">📄 리포트</h3><div class="row"><button class="btn" data-act="report">새 리포트 만들기</button>${S.reports.map((r) => `<a class="btn sm" href="/reports/${encodeURIComponent(r)}" target="_blank">${esc(r.slice(0, 8))}</a>`).join('')}</div></div>`;
 }
 function bindSettings(root) {
+  $('#fs', root).oninput = (e) => {
+    const v = FONT_STEPS[Number(e.target.value)];
+    setPrefs({ fontScale: v });
+    $('#fsName', root).textContent = FONT_NAMES[v];
+  };
+  $('#theme', root).onchange = (e) => setPrefs({ theme: e.target.value });
+  const saveKey = async (kakaoRestKey) => {
+    S = await api('/api/local-settings', { method: 'POST', body: { kakaoRestKey } });
+    toast(kakaoRestKey ? '카카오 키를 저장했어요' : '카카오 키를 지웠어요');
+    render();
+  };
+  $('#saveKey', root).onclick = () => {
+    const k = $('#kakaoKey', root).value.trim();
+    if (!k) return toast('키를 입력해 주세요');
+    saveKey(k);
+  };
+  const del = $('#delKey', root);
+  if (del) del.onclick = () => saveKey('');
   $('#settings', root).onsubmit = async (e) => {
     e.preventDefault();
     const f = e.target;
@@ -830,14 +1022,17 @@ function bindSettings(root) {
 // ---------- 라우터 ----------
 async function render() {
   drawNav();
-  const [, page, rawArg] = (location.hash || '#/').split('/');
+  dropMap();
+  const [, page, rawArg, rawTab] = (location.hash || '#/').split('/');
   const arg = rawArg ? decodeURIComponent(rawArg) : rawArg; // 한글 사건번호는 주소에 인코딩되어 있음
+  if (page === 'case' && rawTab) detailTab = decodeURIComponent(rawTab); // #/case/<id>/위치 처럼 탭 바로 열기
   const app = $('#app');
   try {
     if (!S) await load();
     let html;
     if (page === 'list') html = viewList();
     else if (page === 'case') html = await viewCase(arg);
+    else if (page === 'map') html = viewMap();
     else if (page === 'calendar') html = viewCalendar();
     else if (page === 'lab') html = viewLab();
     else if (page === 'content') html = await viewContent(arg);
@@ -850,6 +1045,8 @@ async function render() {
     if (page === 'list') bindList(app);
     if (page === 'case') bindCase(app);
     if (page === 'calendar') bindCalendar(app);
+    if (page === 'map') bindMap(app);
+    if (page === 'case' && detailTab === '위치') bindLocation(app);
     if (page === 'content') bindContent(app);
     if (page === 'settings') bindSettings(app);
     if (page === 'jobs' && arg) {
@@ -857,9 +1054,17 @@ async function render() {
       if (j && j.status === 'running') setTimeout(() => location.hash.endsWith(arg) && render(), 3000);
     }
   } catch (e) {
-    app.innerHTML = `<div class="card empty"><div class="big">⚠️</div>${esc(e.message)}<div style="margin-top:10px"><a class="btn" href="#/">홈으로</a></div></div>`;
+    app.innerHTML = `<div class="card empty"><div class="big">⚠️</div>${esc(e.message)}<div style="margin-top:0.625rem"><a class="btn" href="#/">홈으로</a></div></div>`;
   }
 }
+
+$('#fontBtn').onclick = () => {
+  const cur = getPrefs().fontScale;
+  const next = FONT_STEPS[(FONT_STEPS.indexOf(cur) + 1) % FONT_STEPS.length] || 1;
+  setPrefs({ fontScale: next });
+  toast(`글자 크기: ${FONT_NAMES[next]}`, 1500);
+  if (mapInst) mapInst.invalidateSize();
+};
 
 let lastHash = location.hash;
 window.addEventListener('hashchange', () => {

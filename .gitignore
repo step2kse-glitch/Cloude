@@ -14,3 +14,4 @@ auction/workspace/*/*
 !auction/workspace/*/.gitkeep
 auction/workspace/demo/
 auction/workspace/*.ics
+auction/workspace/*.json

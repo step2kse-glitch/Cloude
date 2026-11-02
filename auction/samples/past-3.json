@@ -66,5 +66,12 @@
     "winningBid": 468000000,
     "bidders": 12,
     "date": "2026-08-13"
+  },
+  "geo": {
+    "lat": 37.1498,
+    "lng": 127.0772,
+    "source": "예시 좌표 (가상 물건)",
+    "approx": true,
+    "query": null
   }
 }
