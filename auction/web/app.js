@@ -243,6 +243,44 @@ function watchJob(id) {
   setTimeout(tick, 3000);
 }
 
+// ---------- 오늘의 블로그 (1억으로 경매) ----------
+function dailyCard() {
+  const d = S.daily;
+  const series = (S.criteria.daily && S.criteria.daily.series) || '오늘의 물건';
+  let body;
+  if (!d || d.date !== S.today) body = `<p class="sub" style="margin:0 0 0.5rem">매일 아침 자동으로 1건을 골라 글을 준비해요. 아직 오늘 실행 전이에요.</p><button class="btn" id="dailyRun">지금 고르기</button>`;
+  else if (d.status === 'pass') body = `<p style="margin:0">⏭ 오늘은 조건에 맞는 새 물건이 없어 <b>패스</b>했어요.</p><p class="sub" style="margin:0.25rem 0 0">확인 ${d.checked}건 · ${esc(Object.entries(d.skipped || {}).map(([k, v]) => `${k} ${v}`).join(', '))}</p>`;
+  else if (d.status === 'saved') body = `<p style="margin:0">✅ <b>${esc(d.caseNo)}</b> 임시저장 완료 — 네이버 블로그 앱 → 임시저장 글에서 확인 후 <b>발행</b>해 주세요.</p>`;
+  else body = `<p style="margin:0"><b>#${esc(d.episode)} ${esc(d.title)}</b></p><p class="sub" style="margin:0.25rem 0 0.5rem">${esc(d.caseNo)} · 등급 ${esc(d.grade)} · 후보 ${d.candidates}건 중 선택</p>
+      <div class="row"><a class="btn" href="#/content/${encodeURIComponent(d.caseId)}">미리보기</a><button class="btn primary" id="dailyOk">✅ 승인하고 임시저장</button></div>`;
+  return `<div class="card" style="margin-top:0.875rem;border-color:var(--accent)"><h3 style="margin-top:0">📝 오늘의 블로그 — ${esc(series)}</h3>${body}</div>`;
+}
+function bindDaily(root) {
+  const run = $('#dailyRun', root);
+  if (run)
+    run.onclick = async () => {
+      run.disabled = true;
+      run.textContent = '고르는 중…';
+      try {
+        const r = await api('/api/daily', { method: 'POST', body: {} });
+        toast(r.status === 'pass' ? '오늘은 조건에 맞는 물건이 없어요' : '오늘의 글을 준비했어요');
+      } catch (e) {
+        toast(e.message);
+      }
+      await load();
+      render();
+    };
+  const ok = $('#dailyOk', root);
+  if (ok)
+    ok.onclick = async () => {
+      try {
+        afterJob(await api('/api/blog-save', { method: 'POST', body: { file: S.daily.file, caseNo: S.daily.caseNo } }));
+      } catch (e) {
+        toast(e.message, 4000);
+      }
+    };
+}
+
 // ---------- 홈 ----------
 function viewHome() {
   const c = S.criteria;
@@ -284,6 +322,7 @@ function viewHome() {
     <div class="card kpi"><div class="l">내 추천가 적중률(±10%)</div><div class="v">${st.n ? pct(st.within10 / st.n, 0) : '-'}</div><div class="l">낙찰 결과 ${st.n}건 기준</div></div>
   </div>
 
+  ${dailyCard()}
   <h2>빠른 작업</h2>
   <div class="actions">
     <button class="action" data-act="search"><span class="ic">🔎</span><b>AI로 물건 찾기</b><small>조건만 말하면 순회·분석</small></button>
@@ -1110,6 +1149,7 @@ async function render() {
     app.innerHTML = html;
     bindActions(app);
     bindStars(app);
+    if (!page || page === '') bindDaily(app);
     if (page === 'list') bindList(app);
     if (page === 'case') bindCase(app);
     if (page === 'calendar') bindCalendar(app);

@@ -15,6 +15,8 @@ argument-hint: "예: 화성 아파트 5억 이하 투자 / 동탄 실거주 내 
 - **"교차검증 <사건번호>"** → 아래 8.
 - **"콘텐츠 <사건번호> <blog|shorts|longform>"** → 아래 9.
 - **"블로그 <사건번호>"** 또는 요청에 "블로그" 포함(예: "좋은 물건은 블로그까지") → 아래 10.
+- **"오늘의 물건"** (매일 자동 실행이 보내는 요청) → 아래 11.
+- **"오늘 거 올려줘"/"승인"** → 오늘 초안(`auction/workspace/daily/<오늘>.json`, status ready)을 `node auction/src/cli.js daily --approve` 로 임시저장 → 결과 보고.
 - **"웹"/"화면"** → `node auction/src/cli.js web` 안내 (경매분석.command/.bat 더블클릭과 같음).
 
 > 케이스 id = `auction/workspace/cases/<id>.json` 의 파일 이름 (사건번호의 특수문자는 `_`). 샘플은 sample-A 등.
@@ -82,3 +84,10 @@ argument-hint: "예: 화성 아파트 5억 이하 투자 / 동탄 실거주 내 
   (로그인 안 돼 있으면 `node scripts/naver_login.js --profile=naver-profile-auction` 으로 먼저 로그인 안내).
   (선택값은 `auction/workspace/settings.local.json` 의 blogTarget: main | auction)
 - 루트 CLAUDE.md "자가 검증"대로 텍스트대조 결과·스크린샷 확인. ❌ 면 성공 보고 금지. 발행은 사람이 한다.
+
+## 11. 오늘의 물건 ("1억으로 경매" 매일 1건)
+1. `auction/config/recipe.json` 이 verified:true 면 3단계(순회)를 criteria 로 실행하고, 새 물건은 4~5단계대로 케이스 JSON 작성(사실만). verified:false 면 순회는 건너뛰고 기존 물건으로 진행(보고에 "첫 수동 실행 필요" 표시).
+2. `node auction/src/cli.js daily` — 등급 A·B, 잔금일 필요현금 ≤ criteria.daily.maxCashNeeded, 입찰일 7일 이상 남음, 아직 안 쓴 물건 중 1건. **없으면 "오늘은 패스"로 끝.**
+3. 고른 물건의 초안 JSON 글을 10단계 규칙대로 다듬는다 (시리즈 문구·"현금 1억으로 가능할까" 단락 유지).
+4. 대화형이면 미리보기 후 **"이대로 네이버에 임시저장할까요?"** → 승인 시 `node auction/src/cli.js daily --approve`. 비대화형(예약 실행)이면 여기서 멈추고 초안 경로만 남긴다 — 사용자가 웹 화면 홈 "오늘의 블로그" 카드나 채팅("오늘 거 올려줘")으로 승인한다.
+5. 발행은 항상 사람이 네이버 앱에서 한다. 하루 1건을 넘기지 않는다.

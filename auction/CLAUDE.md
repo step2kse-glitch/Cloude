@@ -22,6 +22,7 @@
 | `verify.js` | 교차검증: `<id>.check.json`(독립 2차 추출)과 비교 |
 | `content.js` | 블로그·쇼츠·롱폼 사실 초안 (개인정보 제거) |
 | `blogpost.js` · `cards.js` | 분석 → 네이버 블로그 초안(drafts/YYYYMMDD-auction-<id>.json, naver_draft 형식) + 카드 이미지 5장. 임시저장은 승인 후 `scripts/naver_draft.js` (경매 전용 블로그면 `--profile=naver-profile-auction`) |
+| `daily.js` · `ai.js` | 매일 1건(criteria.daily): 조건 맞는 미작성 물건 → 시리즈 블로그 초안, 없으면 패스. `cli.js daily [--ai|--approve]`, 예약은 매일경매-켜기.command/.bat |
 | `geocode.js` | 주소 → 좌표 (카카오 키 있으면 카카오, 없으면 OpenStreetMap, 초당 1회) → 케이스 geo |
 | `store.js` · `server.js` · `web/` | 케이스 저장소 · 로컬 웹 서버 · 화면 |
 | `evaluate.js` | 위를 묶고 등급(A/B/C/X/보류) |

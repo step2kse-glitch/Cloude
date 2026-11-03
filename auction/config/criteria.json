@@ -1,16 +1,16 @@
 {
   "_note": "/auction 이 검색·평가에 쓰는 조건. 빈 값은 '조건 없음'. 채팅으로 말하면 Claude가 고쳐준다.",
-  "goal": "투자(단기매도)",
-  "court": "수원지방법원",
+  "goal": "상관없음",
+  "court": "",
   "sido": "경기도",
-  "sigungu": "화성시",
-  "usage": "아파트",
+  "sigungu": "",
+  "usage": "",
   "minAppraisal": 0,
-  "maxMinPrice": 500000000,
+  "maxMinPrice": 200000000,
   "minFailCount": 1,
-  "areaM2Min": 59,
+  "areaM2Min": 20,
   "areaM2Max": 85,
-  "cashAvailable": 200000000,
+  "cashAvailable": 100000000,
   "buyer": {
     "houseCountAfter": 1,
     "regulatedArea": false,
@@ -42,5 +42,17 @@
       "생활편의"
     ],
     "moveInBy": ""
+  },
+  "daily": {
+    "_note": "매일 아침 '1억으로 경매' 블로그용 물건 1건 고르기. 조건 맞는 물건이 없으면 그날은 패스.",
+    "enabled": true,
+    "series": "1억으로 경매",
+    "grades": [
+      "A",
+      "B"
+    ],
+    "minDaysBeforeSale": 7,
+    "maxCashNeeded": 100000000,
+    "time": "07:30"
   }
 }
