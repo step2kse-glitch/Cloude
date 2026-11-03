@@ -46,3 +46,27 @@ test('네이버 프로필: 허용된 이름만', () => {
   assert.strictEqual(run('--profile=naver-profile-auction'), 'naver-profile-auction');
   assert.strictEqual(run('--profile=../etc'), 'naver-profile');
 });
+
+test('오늘의 물건: 조건 맞는 1건, 이미 쓴 물건·현금 초과·입찰 임박은 제외, 없으면 패스', () => {
+  const { pick } = require('../src/daily');
+  const all = cases().map((c) => ({ ...c, _sample: false }));
+  const crit = { ...config('criteria.json'), cashAvailable: 2e8, daily: { grades: ['A', 'B'], maxCashNeeded: 2e8, minDaysBeforeSale: 7 } };
+  const r = pick(all, crit, { blogged: [] });
+  assert.strictEqual(r.chosen.caseNo, '2099타경10001'); // A 등급 우선
+  const r2 = pick(all, crit, { blogged: ['2099타경10001'] });
+  assert.strictEqual(r2.chosen.caseNo, '2099타경10002');
+  const r3 = pick(all, { ...crit, daily: { ...crit.daily, maxCashNeeded: 5e7 } }, { blogged: [] });
+  assert.strictEqual(r3.chosen, null);
+  assert.ok(r3.skipped['필요 현금 초과'] >= 1);
+  const r4 = pick(all, { ...crit, daily: { ...crit.daily, minDaysBeforeSale: 30 } }, { blogged: [] });
+  assert.strictEqual(r4.chosen, null); // 샘플 입찰일은 9·16일 뒤
+});
+
+test('시리즈 글: 회차·현금 단락·시리즈 태그', () => {
+  const c = cases().find((x) => x._id === 'sample-A');
+  const d = blog.build(c, [], { series: '1억으로 경매', episode: 3 });
+  const all = JSON.stringify(d);
+  assert.match(all, /'1억으로 경매' 시리즈 3번째/);
+  assert.ok(d.blocks.some((b) => b.type === 'subtitle' && /으로 가능할까/.test(b.text)));
+  assert.strictEqual(d.tags[0], '1억으로경매');
+});

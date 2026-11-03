@@ -95,8 +95,8 @@ function startJob(kind, params) {
 }
 
 // 블로그 임시저장·네이버 로그인처럼 AI 없이 도는 작업
-const PROFILES = { main: 'naver-profile', auction: 'naver-profile-auction' };
-const blogProfile = () => PROFILES[geo.readLocal().blogTarget] || PROFILES.main;
+const { blogProfile } = require('./blogpost');
+const daily = require('./daily');
 function startProcess(kind, script, args, params = {}) {
   if ([...jobs.values()].some((j) => j.status === 'running')) return { status: 'failed', log: '다른 작업이 진행 중이에요. 끝난 뒤 다시 눌러 주세요.' };
   const id = `${Date.now().toString(36)}-${kind}`;
@@ -119,6 +119,7 @@ function startProcess(kind, script, args, params = {}) {
     // naver_draft 는 텍스트 대조 불일치(❌)면 성공으로 보지 않는다
     job.status = code === 0 && !/텍스트대조[^\n]*❌/.test(job.log) ? 'done' : 'failed';
     job.endedAt = new Date().toISOString();
+    if (job.status === 'done' && kind === 'blogsave' && params.caseNo) daily.markBlogged(params.caseNo);
   });
   return job;
 }
@@ -180,6 +181,7 @@ function state() {
     hasKakaoKey: !!geo.readLocal().kakaoRestKey,
     blog: { target: geo.readLocal().blogTarget || 'main', profile: blogProfile(), loggedIn: fs.existsSync(path.join(PATHS.root, blogProfile())) },
     recipeVerified: !!readJson(path.join(PATHS.config, 'recipe.json')).verified,
+    daily: daily.today(),
     reports: fs.existsSync(PATHS.reports) ? fs.readdirSync(PATHS.reports).filter((f) => f.endsWith('.html')).sort().reverse().slice(0, 10) : [],
   };
 }
@@ -370,6 +372,10 @@ async function route(req, res, url) {
     if (!/^drafts\/\d{8}-auction-[\w가-힣-]+\.json$/.test(b.file || '') || !fs.existsSync(path.join(PATHS.root, b.file))) return send(res, 400, { error: '초안 파일이 없어요' });
     if (!fs.existsSync(path.join(PATHS.root, blogProfile()))) return send(res, 400, { error: '네이버 로그인이 먼저 필요해요 (설정 → 네이버 블로그)' });
     return send(res, 200, startProcess('blogsave', 'scripts/naver_draft.js', [b.file], { file: b.file, caseNo: b.caseNo }));
+  }
+  if (req.method === 'POST' && p === '/api/daily') {
+    // 지금 있는 물건 중에서 오늘의 1건 고르기 (AI 순회 없이 빠르게)
+    return send(res, 200, await daily.run());
   }
   if (req.method === 'POST' && p === '/api/naver-login') {
     return send(res, 200, startProcess('naverlogin', 'scripts/naver_login.js', []));

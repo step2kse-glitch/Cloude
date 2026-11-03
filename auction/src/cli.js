@@ -10,6 +10,7 @@
 //   node auction/src/cli.js verify <id>          <id>.check.json(두 번째 추출본)과 교차검증
 //   node auction/src/cli.js content <id> [blog|shorts|longform]  콘텐츠 사실 초안 출력
 //   node auction/src/cli.js blog <id>            네이버 블로그 초안(JSON+카드 이미지) 만들기 — 임시저장은 승인 후 naver_draft.js
+//   node auction/src/cli.js daily [--ai|--approve] 오늘의 1건 → 블로그 초안 (--ai: AI 순회부터, --approve: 승인 후 임시저장)
 //   node auction/src/cli.js ics [--all]          관심물건(또는 전체) 일정 → workspace/auction.ics
 const fs = require('fs');
 const path = require('path');
@@ -49,6 +50,14 @@ function print(cases) {
     if (result.verification) console.log(`  교차검증: ${result.verification.ok ? '✅ 일치' : `❗ 불일치 ${result.verification.mismatches}건`}`);
     if (result.analysis.questions.length) console.log(`  ❓ ${result.analysis.questions.join(' / ')}`);
   }
+}
+
+// 컴퓨터 알림 (맥만 — 윈도우는 웹 화면 홈에서 확인)
+function notify(msg) {
+  if (process.platform !== 'darwin') return;
+  try {
+    require('child_process').spawnSync('osascript', ['-e', `display notification ${JSON.stringify(msg)} with title "내 경매 비서"`]);
+  } catch {}
 }
 
 function main() {
@@ -144,6 +153,45 @@ function main() {
       });
       break;
     }
+    case 'daily': {
+      const daily = require('./daily');
+      const fsx = require('fs');
+      const logDir = path.join(PATHS.workspace, 'daily');
+      fsx.mkdirSync(logDir, { recursive: true });
+      const log = (m) => {
+        console.log(m);
+        fsx.appendFileSync(path.join(logDir, 'run.log'), `[${new Date().toISOString()}] ${m}\n`);
+      };
+      if (args.includes('--approve')) {
+        // 사용자가 승인한 뒤에만 호출: 오늘 초안을 네이버에 임시저장 (발행은 사람이)
+        const t = daily.today();
+        if (!t || t.status !== 'ready') return log('임시저장할 오늘의 초안이 없어요');
+        const { blogProfile } = require('./blogpost');
+        const { spawnSync } = require('child_process');
+        const r = spawnSync(process.execPath, [path.join(PATHS.root, 'scripts', 'naver_draft.js'), t.file, `--profile=${blogProfile()}`], { cwd: PATHS.root, encoding: 'utf8' });
+        const out = (r.stdout || '') + (r.stderr || '');
+        console.log(out);
+        if (r.status === 0 && !/텍스트대조[^\n]*❌/.test(out)) {
+          daily.markBlogged(t.caseNo);
+          log(`✅ 임시저장 완료: ${t.caseNo} — 네이버 앱 → 임시저장 글에서 확인 후 발행하세요`);
+        } else log(`❌ 임시저장 실패: ${t.caseNo} (drafts/ 의 .manual.txt·.png 확인)`);
+        break;
+      }
+      (async () => {
+        if (args.includes('--ai')) {
+          const { runClaude } = require('./ai');
+          log('🤖 AI 순회·분석 시작 (/auction 오늘의 물건)');
+          const code = await runClaude('/auction 오늘의 물건', { onData: (d) => fsx.appendFileSync(path.join(logDir, 'run.log'), d) });
+          if (code == null) log('Claude Code 를 찾지 못해 AI 순회는 건너뛰고 기존 물건에서 골라요');
+          else return log(`AI 작업 종료 (코드 ${code}) — 결과는 웹 화면 홈의 "오늘의 블로그" 또는 workspace/daily/ 에서 확인`);
+        }
+        const r = await daily.run();
+        if (r.status === 'pass') log(`⏭ ${r.message} (확인 ${r.checked}건: ${Object.entries(r.skipped).map(([k, v]) => `${k} ${v}`).join(', ') || '-'})`);
+        else log(`📝 오늘의 물건: ${r.caseNo} [${r.grade}] "${r.title}" → ${r.file}\n   승인하면: node auction/src/cli.js daily --approve`);
+        notify(r.status === 'pass' ? '오늘은 조건에 맞는 경매 물건이 없어 패스해요' : `오늘의 경매 글 초안 준비됨: ${r.caseNo}`);
+      })();
+      break;
+    }
     case 'ics': {
       const out = path.join(PATHS.workspace, 'auction.ics');
       fs.writeFileSync(out, calendar.toIcs(store.list(), { onlyWatched: !args.includes('--all') }));
@@ -156,7 +204,7 @@ function main() {
       break;
     }
     default:
-      console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(1, 13).join('\n').replace(/^\/\/ ?/gm, ''));
+      console.log(fs.readFileSync(__filename, 'utf8').split('\n').slice(1, 14).join('\n').replace(/^\/\/ ?/gm, ''));
   }
 }
 

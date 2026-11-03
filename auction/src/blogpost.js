@@ -22,7 +22,8 @@ function fitTitle(t, fallbackTail) {
   return s.slice(0, 40);
 }
 
-function build(c, images = []) {
+// opts.series / opts.episode: 시리즈 글 (예: "1억으로 경매" 3번째)
+function build(c, images = [], opts = {}) {
   const r = c.result;
   const a = r.analysis;
   const k = r.calc || {};
@@ -48,7 +49,12 @@ function build(c, images = []) {
     `오늘은 ${sigungu} ${dong} ${usage} 한 건을 서류부터 숫자까지 끝까지 따라가 봤어요.`,
     X ? `결론부터 말씀드리면, 이 물건은 저라면 넘깁니다.` : `결론부터 말씀드리면, 등급은 ${r.grade}(${{ A: '입찰 검토', B: '조건부', C: '관망' }[r.grade] || r.grade})예요.`,
   );
-  text('좋은 점만 쓰지 않을게요.', '서류를 직접 읽고 계산기로 돌린 결과를 그대로 옮깁니다.');
+  text(
+    opts.series ? `'${opts.series}' 시리즈 ${opts.episode || 1}번째 물건이에요.` : null,
+    opts.series && r.settings.cashAvailable ? `현금 ${eok(r.settings.cashAvailable)}(대출 ${pct(r.settings.buyer.loanRatio, 0)} 가정)으로 정말 가능한지 따져볼게요.` : null,
+    '좋은 점만 쓰지 않을게요.',
+    '서류를 직접 읽고 계산기로 돌린 결과를 그대로 옮깁니다.',
+  );
   image('summary');
 
   blocks.push({ type: 'subtitle', text: `${kw} 기본 정보` });
@@ -81,6 +87,16 @@ function build(c, images = []) {
   blocks.push({ type: 'quote', text: kept.length || risky.length ? '싼 데는 이유가 있다 — 이 물건은 권리관계가 핵심' : opp.length ? '대항력 임차인은 낙찰가에 따라 떠안는 돈이 달라져요' : '권리관계는 깔끔한 편, 관건은 시세와 경쟁' });
   blocks.push({ type: 'divider' });
 
+  if (opts.series && !X && k.scenarios && r.settings.cashAvailable) {
+    const need = k.scenarios.mid.cashNeeded;
+    blocks.push({ type: 'subtitle', text: `현금 ${eok(r.settings.cashAvailable)}으로 가능할까` });
+    text(
+      `입찰 당일엔 보증금 ${eok(k.deposit)}만 있으면 돼요.`,
+      `낙찰되면 잔금일에 대출 ${pct(r.settings.buyer.loanRatio, 0)}를 빼고 세금·이전비·명도·수리비까지 약 ${eok(need)}이 필요해요.`,
+      need <= r.settings.cashAvailable ? `${eok(r.settings.cashAvailable - need)} 정도 여유가 남는 계산이에요.` : `${eok(need - r.settings.cashAvailable)}이 모자라서 대출 한도를 먼저 확인해야 해요.`,
+      '대출 비율은 소득·주택 수에 따라 달라지니 은행 상담값으로 다시 계산해 보세요.',
+    );
+  }
   if (!X && k.bids) {
     blocks.push({ type: 'subtitle', text: `${kw} 입찰가는 얼마가 적당할까` });
     image('bid');
@@ -119,7 +135,7 @@ function build(c, images = []) {
     DISCLAIMER,
   );
 
-  const tags = [...new Set([`${sigungu}${usage}경매`, `${sigungu}경매`, `${usage}경매`, '법원경매', '부동산경매', '경매권리분석', '말소기준권리', X ? '경매주의물건' : '경매입찰가', dong && `${dong}${usage}`].filter(Boolean).map((t) => t.replace(/\s/g, '')))].slice(0, 10);
+  const tags = [...new Set([opts.series && opts.series.replace(/\s/g, ''), `${sigungu}${usage}경매`, `${sigungu}경매`, `${usage}경매`, '법원경매', '부동산경매', '경매권리분석', '말소기준권리', X ? '경매주의물건' : '경매입찰가', dong && `${dong}${usage}`].filter(Boolean).map((t) => t.replace(/\s/g, '')))].slice(0, 10);
 
   return {
     title,
@@ -135,12 +151,12 @@ function build(c, images = []) {
 }
 
 // 카드 이미지 만들고 drafts/YYYYMMDD-auction-<id>.json 저장
-async function createDraft(c) {
+async function createDraft(c, opts = {}) {
   if (!c.result) throw new Error('분석된 물건이 아니에요');
   const id = c._id || String(c.caseNo).replace(/[^\w가-힣-]/g, '_');
   const imgDir = path.join(PATHS.root, 'drafts', 'auction', id);
   const images = await cards.render(c, imgDir, PATHS.root);
-  const draft = build({ ...c, _id: id }, images);
+  const draft = build({ ...c, _id: id }, images, opts);
   const file = path.join(PATHS.root, 'drafts', `${ymd(new Date()).replace(/-/g, '')}-auction-${id}.json`);
   fs.writeFileSync(file, JSON.stringify(draft, null, 2));
   return { file, rel: path.relative(PATHS.root, file).split(path.sep).join('/'), draft, images };
@@ -167,4 +183,11 @@ function preview(draft) {
   ].join('\n');
 }
 
-module.exports = { build, createDraft, preview, stats, keyword };
+// 경매 글을 올릴 네이버 세션 폴더 (설정 → 네이버 블로그 선택)
+const PROFILES = { main: 'naver-profile', auction: 'naver-profile-auction' };
+function blogProfile() {
+  const { readLocal } = require('./geocode');
+  return PROFILES[readLocal().blogTarget] || PROFILES.main;
+}
+
+module.exports = { build, createDraft, preview, stats, keyword, blogProfile };
